@@ -13,8 +13,8 @@ fs = N*BR      # Sampling rate to emulate analog domain
 T = 1/BR       # Time interval between two consecutive symbols
 Ts = 1/fs      # Time between 2 consecutive samples at Tx output
 
-
-rrct, rrcv, dot = r_rcosine(BR/2, fs, 0.5, N, Nbauds, True, False, 8, 7, False, False, False)
+def rcosine(fc, fs, rolloff, oversampling, Nbauds, Norm, n_taps=0):
+rrct, rrcv, dot = r_rcosine(BR/2, fs, 0.5, N, Nbauds, True)
 print ("######################### ROOT RAISED COSINE FILTER #########################")
 print (rrct)
 print (rrcv)
@@ -31,7 +31,7 @@ print ("######################### ROOT RAISED COSINE CONVOLVED FILTER ##########
 print(h_rrc_rrc)  # deberia ser equivalente al rcv (raised cosine)
 
 
-rct, rcv, dot = rcosine(BR/2, fs, 0.5, N, Nbauds, True, False, 8, 7, False, False, False, n_taps=len(h_rrc_rrc))
+rct, rcv, dot = rcosine(BR/2, fs, 0.5, N, Nbauds, True, n_taps=len(h_rrc_rrc))
 print ("######################### RAISED COSINE FILTER #########################")
 print (rct)
 print (rcv)
