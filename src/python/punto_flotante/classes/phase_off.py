@@ -4,13 +4,11 @@ import random
 
 class phase_off:
 
-    def __init__(self, RRC_tx_I_symb_out, RRC_tx_Q_symb_out):
-        self.symbI = RRC_tx_I_symb_out
-        self.symbQ = RRC_tx_Q_symb_out
+    def __init__(self):
+        step             = np.pi/8
+        array_aux        = [float(x) for x in range(int(-np.pi/step), int(np.pi/step) + 1)]
         
-        step       = np.pi/8
-        array_aux  = [float(x) for x in range(int(-np.pi/step), int(np.pi/step) + 1)]
-        self.titas = [x * step for x in array_aux]
+        self.titas       = [x * step for x in array_aux]
 
 
     def get_phase_off(self):
