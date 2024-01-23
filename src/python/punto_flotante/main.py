@@ -10,6 +10,9 @@ import numpy as np
 from numpy import convolve
 import copy
 
+import matplotlib.pyplot as plt
+from classes.phase_off import phase_off
+
 def main():
 
     ##################################################################
@@ -59,7 +62,10 @@ def main():
     
     RRC_rx_I = Polyphase_filter(OS, filt, nbaud)    # Filtro receptor
     RRC_rx_Q = Polyphase_filter(OS, filt, nbaud)    # Filtro receptor
-
+    
+    # Generador de offset de fase.
+    offset_gen =  phase_off()# Instancia objeto que genera desplazamiento de fase.
+    
     # filtro RRC (root raised cosine) convolucionado consigo mismo
     #h_rrc_rrc = convolve(filt, filt)
 
@@ -113,6 +119,8 @@ def main():
             RRC_tx_I_symb_out = RRC_tx_I.get_symbol_output(RRC_tx_I_symbols_in, control)   # 4 bits de salida debido al oversampling
             RRC_tx_Q_symb_out = RRC_tx_Q.get_symbol_output(RRC_tx_Q_symbols_in, control)
 
+            # Desfasaje de símbolos.
+            (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out)
             #print("filter coef: " + str(RRC_tx_I.get_coef_for_control(control)))
             #print("RRC_tx_I_symb_out: " + str(RRC_tx_I_symb_out))
 
