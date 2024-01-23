@@ -9,6 +9,8 @@ class phase_off:
         array_aux        = [float(x) for x in range(int(-np.pi/step), int(np.pi/step) + 1)]
         
         self.titas       = [x * step for x in array_aux]
+        self.i           = 0
+        self.num_of_symb = 0
 
 
     def get_phase_off(self):
