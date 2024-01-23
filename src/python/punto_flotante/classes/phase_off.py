@@ -11,6 +11,8 @@ class phase_off:
         self.titas       = [x * step for x in array_aux]
         self.i           = 0
         self.num_of_symb = 0
+        print(self.titas)
+        print("\n")
 
 
     def get_phase_off(self, RRC_tx_I_symb_out, RRC_tx_Q_symb_out):
