@@ -11,8 +11,8 @@ class phase_off:
         self.titas       = [x * step for x in array_aux]
         self.i           = 0
         self.num_of_symb = 0
-        print(self.titas)
-        print("\n")
+        #print(self.titas)
+        #print("\n")
 
 
     def get_phase_off(self, RRC_tx_I_symb_out, RRC_tx_Q_symb_out):
@@ -25,7 +25,7 @@ class phase_off:
             self.i           = random.randint(0,len(self.titas)-1)
         
         self.num_of_symb += 1
-        print(self.num_of_symb, self.i, self.titas[self.i])
+        #print(self.num_of_symb, self.i, self.titas[self.i])
         
         # Creación del factor e^(jwt) o, en ptras palabras, e^(jTita).
         ejO = cmath.exp(1j*self.titas[self.i])
