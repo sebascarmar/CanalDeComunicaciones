@@ -22,7 +22,7 @@ class phase_off:
         # Realiza una selección aleatoria del index i cada 4 símbolos recibidos.
         if(self.num_of_symb%4 == 0):
             self.num_of_symb = 0
-            self.i           = random.randint(0,len(self.titas))
+            self.i           = random.randint(0,len(self.titas)-1)
         
         self.num_of_symb += 1
         print(self.num_of_symb, self.i, self.titas[self.i])
