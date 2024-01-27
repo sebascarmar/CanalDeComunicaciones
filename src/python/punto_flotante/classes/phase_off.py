@@ -18,10 +18,13 @@ class phase_off:
         self.symbI = RRC_tx_I_symb_out
         self.symbQ = RRC_tx_Q_symb_out
         
-        # Realiza una selección aleatoria del index i cada 4 símbolos recibidos.
+        # Incrementa en 1 el index i cada 4 símbolos recibidos.
         if(self.num_of_symb%4 == 0):
             self.num_of_symb = 0
-            self.i           = random.randint(0,len(self.titas)-1)
+            if( self.i < len(self.titas)-1 ):
+                self.i += 1
+            else:
+                self.i  = 0
         
         self.num_of_symb += 1
         
