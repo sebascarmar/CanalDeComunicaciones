@@ -4,12 +4,13 @@ import random
 
 class phase_off:
 
-    def __init__(self):
-        step             = np.pi/8
-        array_aux        = [float(x) for x in range(int(-np.pi/step), int(np.pi/step) + 1)]
-        
-        self.titas       = [x * step for x in array_aux]
-        self.i           = 0
+    def __init__(self, fs, Delta_f):
+        self.step        = Delta_f/fs
+
+        array_aux        = [float(x) for x in range(0, int(2*np.pi/self.step) + 1)]
+        self.titas       = [x * self.step for x in array_aux]
+
+        self.i           = -1
         self.num_of_symb = 0
         #print(self.titas)
         #print("\n")
