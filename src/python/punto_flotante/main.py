@@ -13,6 +13,8 @@ import copy
 import matplotlib.pyplot as plt
 from classes.phase_off import phase_off
 
+import time
+
 def main():
 
     ##################################################################
@@ -64,7 +66,7 @@ def main():
     RRC_rx_Q = Polyphase_filter(OS, filt, nbaud)    # Filtro receptor
     
     # Generador de offset de fase.
-    offset_gen =  phase_off()# Instancia objeto que genera desplazamiento de fase.
+    ##offset_gen =  phase_off()  #! FIX ARGUMENTOS  # Instancia objeto que genera desplazamiento de fase.
     
     # filtro RRC (root raised cosine) convolucionado consigo mismo
     #h_rrc_rrc = convolve(filt, filt)
@@ -120,7 +122,7 @@ def main():
             RRC_tx_Q_symb_out = RRC_tx_Q.get_symbol_output(RRC_tx_Q_symbols_in, control)
 
             # Desfasaje de símbolos.
-            (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out)
+            # (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out) ##fix argumentos en declaracion
             #print("filter coef: " + str(RRC_tx_I.get_coef_for_control(control)))
             #print("RRC_tx_I_symb_out: " + str(RRC_tx_I_symb_out))
 
@@ -180,6 +182,8 @@ def main():
         print("bits_totales:" + str(ber_rxI.bits_totales))
 
         print("offsetI: " + str(offsetI))
+
+        time.sleep(1)  # pausa de 1 segundo tras capturar 511 bits
 
 if __name__ == '__main__':
     main()
