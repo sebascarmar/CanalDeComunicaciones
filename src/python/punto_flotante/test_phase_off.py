@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from classes.phase_off import phase_off
+fs      = 50    # Sampling freq
+Delta_f = 10
 
 symbI = [1.0,-1.0,-1.0,1.0]
 symbQ = [1.0,1.0,-1.0,-1.0]
