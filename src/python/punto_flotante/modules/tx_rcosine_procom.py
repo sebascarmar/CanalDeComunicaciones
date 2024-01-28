@@ -1,6 +1,6 @@
 import numpy as np
 
-from punto_flotante_with_GUI.tool._fixedInt import arrayFixedInt
+#from punto_flotante_with_GUI.tool._fixedInt import arrayFixedInt
 
 Nfreqs = 256         # Cantidad de frecuencias, o numero de puntos de fft
 
@@ -185,4 +185,3 @@ def dispersion(offset, os, symb_out0I, symb_out0Q):
     y = symb_out0Q[100+offset:len(symb_out0Q)-(100-offset):int(os)]
 
     return x, y
-
