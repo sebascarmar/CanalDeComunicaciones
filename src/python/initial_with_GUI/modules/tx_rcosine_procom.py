@@ -1,6 +1,6 @@
 import numpy as np
 
-from tool._fixedInt import *
+from initial_with_GUI.tool._fixedInt import arrayFixedInt
 
 Nfreqs = 256         # Cantidad de frecuencias, o numero de puntos de fft
 
@@ -8,23 +8,27 @@ Nfreqs = 256         # Cantidad de frecuencias, o numero de puntos de fft
 
 
 def rcosine(fc, fs, rolloff, oversampling, Nbauds, Norm, Fixed, NB, NBF, t_r, s_oF, sig_unsig, n_taps=0):
-    if n_taps == 0:
-        n_taps = oversampling * Nbauds  # numero de coeficientes o Pulse shaping taps
-
+    #if n_taps == 0:
+    #    n_taps = oversampling * Nbauds  # numero de coeficientes o Pulse shaping taps
     #if n_taps%2 == 0: # forzar como impar
     #    n_taps =  n_taps + 1
 
     BR = fc*2       #Baud Rate
-    rolloff = rolloff + 0.0001
-    T = 1 / fc       #Time interval between two consecutive symbols
+    #rolloff = rolloff + 0.0001
+    Tbaud = 1 / BR       #Time interval between two consecutive symbols
     Ts = 1 / fs      #Time between 2 consecutive samples at Tx output
     """ Respuesta al impulso del pulso de caida cosenoidal """
-    # t_vect = np.arange(-0.5*Nbauds*Tbaud, 0.5*Nbauds*Tbaud, float(Tbaud)/oversampling)
-    t_vect = np.arange(-0.5 * (n_taps - 1) * Ts, 0.5 * n_taps * Ts, Ts)
-    tn_vect = t_vect * 2/T
+
+    t_vect = np.arange(-0.5*Nbauds*Tbaud, 0.5*Nbauds*Tbaud, Ts)
+    # t_vect = np.arange(-0.5 * (n_taps - 1) * Ts, 0.5 * n_taps * Ts, Ts)
+    # tn_vect = t_vect * 2/T
 
     # filtro pasabajos
-    y_vect = np.sinc(tn_vect)*(np.cos(np.pi*rolloff*tn_vect)/(1-(4.0*rolloff*rolloff*tn_vect*tn_vect)))
+    y_vect = []
+    #filtro pasabajos
+    for t in t_vect:
+        y_vect.append(np.sinc(t/Tbaud)*(np.cos(np.pi*rolloff*t/Tbaud)/(1-(4.0*rolloff*rolloff*t*t/(Tbaud*Tbaud)))))
+
     y_vect = np.array(y_vect)
 
     if Norm:
@@ -39,37 +43,32 @@ def rcosine(fc, fs, rolloff, oversampling, Nbauds, Norm, Fixed, NB, NBF, t_r, s_
 
     dot = (np.sum(y_vect ** 2))
 
-    return tn_vect, y_vect, dot
-
+    return t_vect, y_vect, dot
 
 def r_rcosine(fc, fs, rolloff, oversampling, Nbauds, Norm, Fixed, NB, NBF, t_r, s_oF, sig_unsig, n_taps=0):
-    if n_taps == 0:
-        n_taps = oversampling * Nbauds  # numero de coeficientes o Pulse shaping taps
-
+    #if n_taps == 0:
+    #    n_taps = oversampling * Nbauds  # numero de coeficientes o Pulse shaping taps
     #if (n_taps%2 == 0): # forzar como impar
     #    n_taps =  n_taps + 1
 
     BR = fc*2       #Baud Rate
-    rolloff = rolloff + 0.0001
-    T = 1 / fc       #Time interval between two consecutive symbols
+    #rolloff = rolloff + 0.0001
+    Tbaud = 1 / BR       #Time interval between two consecutive symbols
     Ts = 1 / fs      #Time between 2 consecutive samples at Tx output
-
     """ Respuesta al impulso del pulso de caida cosenoidal """
-    # t_vect = np.arange(-0.5*Nbauds*Tbaud, 0.5*Nbauds*Tbaud, float(Tbaud)/oversampling)
-    t_vect = np.arange(-0.5 * (n_taps - 1) * Ts, 0.5 * n_taps * Ts, Ts)
-    tn_vect = t_vect * 2/T
 
-    # filtro pasabajos
+    t_vect = np.arange(-0.5*Nbauds*Tbaud, 0.5*Nbauds*Tbaud, Ts)
+    # t_vect = np.arange(-0.5 * (n_taps - 1) * Ts, 0.5 * n_taps * Ts, Ts)
+    t_vect = t_vect / Tbaud
+
     y_vect = []
-
     #filtro pasabajos
-    for t in tn_vect:
+    for t in t_vect:
         if (t == 0):
             y_vect.append((1+rolloff*(4/np.pi-1)))
         else:
             y_vect.append((4*rolloff*t*np.cos(((1+rolloff)*np.pi*t))+np.sin((1-rolloff)*np.pi*t))/(np.pi*t*(1-(16*rolloff*rolloff*t*t))))
     #para t distinto de 0 y  T/(4*rolloff) o  -T/(4*rolloff) ¿?
-
     y_vect = np.array(y_vect)
 
     if Norm:
@@ -84,7 +83,8 @@ def r_rcosine(fc, fs, rolloff, oversampling, Nbauds, Norm, Fixed, NB, NBF, t_r, 
 
     dot = (np.sum(y_vect ** 2))
 
-    return tn_vect, y_vect, dot
+    return t_vect, y_vect, dot
+
 
 def filtro_pulso(fc, fs, rolloff, oversampling, Nbauds, Norm, Fixed, NB, NBF, t_r, s_oF, sig_unsig, RRC, n_taps=0):
 

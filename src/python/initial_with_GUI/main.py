@@ -28,7 +28,7 @@ def main():
     FB = 1000  # BR baudrate
     beta = 0.5
     OS = 4
-    nbaud = 5
+    nbaud = 6
     Norm = True
     n_taps = nbaud * OS
     fs = OS * float(FB) * 1.0e6
@@ -36,7 +36,7 @@ def main():
     Ts = 1 / fs
     NB = 8
     NBF = 7
-    RRC = True
+    RRC = False
     truncar_redondear = True
     saturar_overflow = True
     signed_unsigned = True
@@ -50,7 +50,7 @@ def main():
     offsetI = 0
     offsetQ = 0;
     phase = 0;
-    fixed = True;
+    fixed = False;
     gauss = False
     sigma = 0.1
     freerun = False
@@ -237,7 +237,6 @@ def main():
 
                 # filtro receptor
                 if RRC:
-                    # filtro transmisor
                     bits_entradaI = pol_filterI2.get_bits_incoming(bits_salidaI, control)
                     bits_entradaQ = pol_filterQ2.get_bits_incoming(bits_salidaQ, control)
 
