@@ -23,13 +23,13 @@ class dsp_gui:
 
         sliders_col1 = [
             [sg.Text(f'OS', key=f'OverSampling', size=(8, 1)),
-                    sg.Slider(range=(2, 16), orientation='h', size=(20, 8), default_value=3, key='OS',
+                    sg.Slider(range=(2, 16), orientation='h', size=(20, 8), default_value=4, key='OS',
                                       enable_events=True, visible=True)],
             [sg.Text(f'Phase', key=f'Phase Const', size=(8, 1), visible=True),
                     sg.Slider(range=(0, 3), orientation='h', size=(20, 8), default_value=0, key='PConst',
                                       enable_events=True, visible=True)],
             [sg.Text(f'N Bauds', key=f'N B', size=(8, 1)),
-             sg.Slider(range=(1, 50), orientation='h', size=(20, 8), default_value=5, key='N Bauds',
+             sg.Slider(range=(1, 50), orientation='h', size=(20, 8), default_value=6, key='N Bauds',
                        enable_events=True, visible=True)]
 
                 ]
@@ -46,7 +46,7 @@ class dsp_gui:
                 sg.Checkbox('Norm', key='Norm', default=True, enable_events=True, visible=True),
                 sg.Checkbox('Q/I', key='Q/I', default=True, enable_events=False, visible=False),
                 sg.Checkbox('offset', key='offset', default=True, enable_events=False, visible=False),
-                sg.Checkbox('RRC', key='RRC', default=True, enable_events=True, visible=False),
+                sg.Checkbox('RRC', key='RRC', default=True, enable_events=True, visible=True),
                 sg.Checkbox('FreeRun', key='freerun', default=False, enable_events=True, visible=True),
                 sg.Checkbox('AWGN', key='gauss', default=False, enable_events=True, visible=True),
                 sg.Slider(range=(0, 1), orientation='h', size=(8, 5), default_value=0.1, key='sigma', resolution=0.1, enable_events=True, visible=True)

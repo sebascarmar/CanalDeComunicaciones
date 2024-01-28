@@ -1,5 +1,6 @@
+import numpy as np
 
-from modules.tx_rcosine_procom import *
+from initial_with_GUI.modules.tx_rcosine_procom import eyediagram, dispersion, downSampling, bode, Nfreqs
 
 
 def build_tab(current_tab, t, filt, dot, B, T, OS, values, Nbaud, aplicacion, symbolsI_tx, symbolsQ_tx,

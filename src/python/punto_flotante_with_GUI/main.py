@@ -28,7 +28,7 @@ def main():
     FB = 1000  # BR baudrate
     beta = 0.5
     OS = 4
-    nbaud = 5
+    nbaud = 6
     Norm = True
     n_taps = nbaud * OS
     fs = OS * float(FB) * 1.0e6
@@ -84,10 +84,10 @@ def main():
     pol_filterQ2 = Polyphase_filter(OS, filt, nbaud)
 
     # filtro RRC (root raised cosine) convolucionado consigo mismo
-    h_rrc_rrc = convolve(filt, filt)
+    #h_rrc_rrc = convolve(filt, filt)
 
     # filtro Raised Cosine producto de la convolucion del root raised cosine
-    rct, rcv, rc_dot = filtro_pulso(fc, fs, beta, OS, nbaud, Norm, RRC=False, n_taps=len(h_rrc_rrc))
+    #rct, rcv, rc_dot = filtro_pulso(fc, fs, beta, OS, nbaud, Norm, RRC=False, n_taps=len(h_rrc_rrc))
 
     # gauss noise generator
     gng = awgn_noise_generator(media=0, sigma=sigma)
@@ -156,10 +156,10 @@ def main():
             pol_filterQ2 = Polyphase_filter(OS, filt, nbaud)
 
             # filtro RRC (root raised cosine) convolucionado consigo mismo
-            h_rrc_rrc = convolve(filt, filt)
+            #h_rrc_rrc = convolve(filt, filt)
 
             # filtro Raised Cosine producto de la convolucion del root raised cosine
-            rct, rcv, rc_dot = filtro_pulso(fc, fs, beta, OS, nbaud, Norm, RRC=False, n_taps=len(h_rrc_rrc))
+            #rct, rcv, rc_dot = filtro_pulso(fc, fs, beta, OS, nbaud, Norm, RRC=False, n_taps=len(h_rrc_rrc))
 
         ##################################################################
         #                   MANEJO DEL SISTEMA DE COMUNICACION           #
@@ -222,7 +222,6 @@ def main():
 
                 # filtro receptor
                 if RRC:
-                    # filtro transmisor
                     bits_entradaI = pol_filterI2.get_bits_incoming(bits_salidaI, control)
                     bits_entradaQ = pol_filterQ2.get_bits_incoming(bits_salidaQ, control)
 
@@ -273,8 +272,11 @@ def main():
         ##################################################################
         if changes or gauss or freerun or current_tab != values.get('tabgroup1'):
             current_tab = values.get('tabgroup1')
-            build_tab(current_tab, rct, rcv, rc_dot, beta, T, OS, values, nbaud, aplicacion, bits_txI, bits_txQ,
-                      ber_rxI, ber_rxQ, Q_I, offsetQ, offsetI, bits_salI, bits_salQ, bits_upSI_plot, bits_upSQ_plot, phase, bits_salI_first_stage, bits_salQ_first_stage)
+            #build_tab(current_tab, rct, rcv, rc_dot, beta, T, OS, values, nbaud, aplicacion, bits_txI, bits_txQ,
+            #          ber_rxI, ber_rxQ, Q_I, offsetQ, offsetI, bits_salI, bits_salQ, bits_upSI_plot, bits_upSQ_plot, phase, bits_salI_first_stage, bits_salQ_first_stage)
+            build_tab(current_tab, tf, filt, dot, beta, T, OS, values, nbaud, aplicacion, bits_txI, bits_txQ,
+              ber_rxI, ber_rxQ, Q_I, offsetQ, offsetI, bits_salI, bits_salQ, bits_upSI_plot, bits_upSQ_plot, phase,
+              bits_salI_first_stage, bits_salQ_first_stage)
 
     aplicacion.window.close()
 
