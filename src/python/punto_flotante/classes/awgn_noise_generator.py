@@ -4,14 +4,14 @@ import numpy as np
 class awgn_noise_generator:
 
     def __init__(self, M, NOS, EbNo):
-        self.M      = M
-        self.NOS    = NOS
-        self.EbNo   = EbNo
-        self.k      = np.log2(M)
-        self.SNR    = EbNo*self.k/NOS
-        self.fifo   = np.zeros(50)
-        self.media  = 0
-        self.sigma  = 1
+        self.M          = M
+        self.NOS        = NOS
+        self.EbNo       = 10**(EbNo/10)
+        self.k          = np.log2(M)
+        self.SNR        = self.EbNo*self.k/NOS
+        self.fifo       = np.zeros(10)
+        self.media      = 0
+        self.sigma      = 1
 
     def set_media(self, media):
         self.media = media

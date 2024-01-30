@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 class BitsErrorRate:
 
@@ -56,6 +57,15 @@ class BitsErrorRate:
             return offset
         else:
             return offset - 511
+        
+    def get_teo_ber(self, M, EbNodB):
+        
+        EbNo = 10**(EbNodB/10)
+        k    = np.log2(M)
+        x    = np.sqrt(3*k*EbNo/(M-1))
+        ber  = (4/k)*(1-1/np.sqrt(M))*(1/2)*math.erfc(x/np.sqrt(2))
+
+        return ber
 
 
 
