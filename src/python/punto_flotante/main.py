@@ -7,7 +7,7 @@ from classes.downsampler_Class      import downsampler
 from classes.demapper_Class         import demapper
 from classes.fir_filter             import fir_filter
 from classes.phase_off              import phase_off
-from classes.adaptive_filter        import adaptive_filter
+from classes.adaptive_filter_bis    import adaptive_filter
 
 from modules.tx_rcosine_procom      import *
 from modules.eyediagram             import *
@@ -22,7 +22,7 @@ def main():
     ##################################################################
     #                           INITIAL DEFS                         #
     ##################################################################
-    Lsim            = 5
+    Lsim            = 10
     enable_plots    = True
     BR              = 1000                      # BR baudrate
     beta            = 0.5                       # Rolloff
@@ -37,7 +37,7 @@ def main():
     offsetI         = 0
     offsetQ         = 0
     phase           = 0
-    EbNo            = 15                        # [dB]
+    EbNo            = 12                       # [dB]
     firfilter_order = 10
     NTAPS_ad_fil    = 51                        # Coeficientes del filtro adaptivo
     LMS_step        = 1e-3                      # Step del LMS
@@ -173,13 +173,13 @@ def main():
             LOG_SYMBS_Q_TX_RRC_OUT.append(RRC_tx_Q_symb_out)
 
             # Desfasaje de símbolos.
-            # (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out,1)
+            (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out,1)
             #print("filter coef: " + str(RRC_tx_I.get_coef_for_control(control)))
             #print("RRC_tx_I_symb_out: " + str(RRC_tx_I_symb_out))
 
             #filtrado de símbolos.
-            filtered_symb_I=fir_filter_symbI.filter_symb(RRC_tx_I_symb_out)
-            filtered_symb_Q=fir_filter_symbQ.filter_symb(RRC_tx_Q_symb_out)
+            filtered_symb_I=fir_filter_symbI.filter_symb(phased_symb_I)#RRC_tx_I_symb_out
+            filtered_symb_Q=fir_filter_symbQ.filter_symb(phased_symb_Q)#RRC_tx_Q_symb_out
 
             #################################
 
@@ -197,41 +197,29 @@ def main():
             LOG_SYMBS_Q_RX_IN.append(Rx_Q_symb_in)
             
             ################################
-            
-            # # Filtro Adaptivo
-            # Slicer_I = ad_fil_I.loop_adaptive_filter(Rx_I_symb_in)
-            # Slicer_Q = ad_fil_Q.loop_adaptive_filter(Rx_Q_symb_in)
-
-            # if((Lsim*Nsymb)%2 == 0):
-            #     LOG_EQ_O_I.append(ad_fil_I.get_eq_o())
-            #     LOG_SL_O_I.append(ad_fil_I.get_slicer_o())
-            #     LOG_ERR_I.append(ad_fil_I.get_error())
-            #     LOG_EQ_O_Q.append(ad_fil_Q.get_eq_o())
-            #     LOG_SL_O_Q.append(ad_fil_Q.get_slicer_o())
-            #     LOG_ERR_Q.append(ad_fil_Q.get_error())
 
             # filtro receptor
-            RRC_rx_I.shift_symbols_incoming(Rx_I_symb_in, control)
-            RRC_rx_Q.shift_symbols_incoming(Rx_Q_symb_in, control)
+            # RRC_rx_I.shift_symbols_incoming(Rx_I_symb_in, control)
+            # RRC_rx_Q.shift_symbols_incoming(Rx_Q_symb_in, control)
             
-            RRC_rx_I_symbols_in = RRC_rx_I.get_symbols_incoming()
-            RRC_rx_Q_symbols_in = RRC_rx_Q.get_symbols_incoming()
+            # RRC_rx_I_symbols_in = RRC_rx_I.get_symbols_incoming()
+            # RRC_rx_Q_symbols_in = RRC_rx_Q.get_symbols_incoming()
             
-            #print("RRC_rx_I_symbols_in: " + str(RRC_rx_I_symbols_in))
+            # #print("RRC_rx_I_symbols_in: " + str(RRC_rx_I_symbols_in))
 
-            # convolucion entre filtro y entrada
-            RRC_rx_I_symb_out = RRC_rx_I.get_symbol_output(RRC_rx_I_symbols_in, control)  # 4 bits de salida debido al oversampling
-            RRC_rx_Q_symb_out = RRC_rx_Q.get_symbol_output(RRC_rx_Q_symbols_in, control)
+            # # convolucion entre filtro y entrada
+            # RRC_rx_I_symb_out = RRC_rx_I.get_symbol_output(RRC_rx_I_symbols_in, control)  # 4 bits de salida debido al oversampling
+            # RRC_rx_Q_symb_out = RRC_rx_Q.get_symbol_output(RRC_rx_Q_symbols_in, control)
             
-            LOG_SYMB_I_RX_RRC_OUT.append(RRC_rx_I_symb_out)
-            LOG_SYMB_Q_RX_RRC_OUT.append(RRC_rx_Q_symb_out)
+            # LOG_SYMB_I_RX_RRC_OUT.append(RRC_rx_I_symb_out)
+            # LOG_SYMB_Q_RX_RRC_OUT.append(RRC_rx_Q_symb_out)
 
             # print("filter2 coef: " + str(RRC_rx_I.get_coef_for_control(control)))
             # print("RRC_rx_I_symb_out: " + str(RRC_rx_I_symb_out))
 
             ###############################
-            ds_rx_I.insert_symbol(RRC_rx_I_symb_out)
-            ds_rx_Q.insert_symbol(RRC_rx_Q_symb_out)
+            ds_rx_I.insert_symbol(Rx_I_symb_in)
+            ds_rx_Q.insert_symbol(Rx_Q_symb_in)
 
             
             # Downsampling
@@ -247,10 +235,23 @@ def main():
                 LOG_SYMBS_I_DWS_OUT.append(dsamp_I_symbol)
                 LOG_SYMBS_Q_DWS_OUT.append(dsamp_Q_symbol)
 
+                # # Filtro Adaptivo
+                Slicer_I = ad_fil_I.loop_adaptive_filter(dsamp_I_symbol)
+                Slicer_Q = ad_fil_Q.loop_adaptive_filter(dsamp_Q_symbol)
+
+                # if((Lsim*Nsymb)%2 == 0):
+                LOG_EQ_O_I.append(ad_fil_I.get_eq_o())
+                LOG_SL_O_I.append(ad_fil_I.get_slicer_o())
+                LOG_ERR_I.append(ad_fil_I.get_error())
+                LOG_EQ_O_Q.append(ad_fil_Q.get_eq_o())
+                LOG_SL_O_Q.append(ad_fil_Q.get_slicer_o())
+                LOG_ERR_Q.append(ad_fil_Q.get_error())
+
+
                 #print("dsamp_I_symbols: " + str(dsamp_I_symbols))
                 # Demapper
-                rx_I_bit_out = rx_demapper.get_bit(dsamp_I_symbol)
-                rx_Q_bit_out = rx_demapper.get_bit(dsamp_Q_symbol)
+                rx_I_bit_out = rx_demapper.get_bit(Slicer_I)
+                rx_Q_bit_out = rx_demapper.get_bit(Slicer_Q)
                 
                 # BER
                 if isim > 0:
@@ -347,6 +348,25 @@ def main():
         plt.grid(True)
         plt.xlabel('Real')
         plt.ylabel('Imag')
+
+        #  -------- Plots Filtro Adaptivo ---------------------------------
+        plt.figure(figsize=[10,6])
+        plt.subplot(2,1,1)
+        plt.plot(LOG_EQ_O_I,'o')
+        plt.grid(True)
+        plt.ylabel('Salida FFE')
+        plt.title('Convergencia filtro adaptivo')
+        plt.subplot(2,1,2)
+        plt.plot(LOG_ERR_I)
+        plt.grid(True)
+        plt.xlabel('Simbolos')
+        plt.ylabel('Error (Slicer_Out - Eq_Out)')
+        plt.title('Convergencia del error')
+
+        plt.figure(figsize=[10,6])
+        plt.plot(ad_fil_I.get_Coef_FFE())
+        plt.grid(True)
+
         
         plt.show(block=False)
         input('Press enter to finish: ')
