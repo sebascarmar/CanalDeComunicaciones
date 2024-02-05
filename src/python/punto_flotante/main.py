@@ -7,7 +7,7 @@ from classes.downsampler_Class      import downsampler
 from classes.demapper_Class         import demapper
 from classes.fir_filter             import fir_filter
 from classes.phase_off              import phase_off
-from classes.adaptive_filter_bis    import adaptive_filter
+from classes.adaptive_filter        import adaptive_filter
 
 from modules.tx_rcosine_procom      import *
 from modules.eyediagram             import *
@@ -173,13 +173,13 @@ def main():
             LOG_SYMBS_Q_TX_RRC_OUT.append(RRC_tx_Q_symb_out)
 
             # Desfasaje de símbolos.
-            (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out,1)
+            # (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out,1)
             #print("filter coef: " + str(RRC_tx_I.get_coef_for_control(control)))
             #print("RRC_tx_I_symb_out: " + str(RRC_tx_I_symb_out))
 
             #filtrado de símbolos.
-            filtered_symb_I=fir_filter_symbI.filter_symb(phased_symb_I)#RRC_tx_I_symb_out
-            filtered_symb_Q=fir_filter_symbQ.filter_symb(phased_symb_Q)#RRC_tx_Q_symb_out
+            filtered_symb_I=fir_filter_symbI.filter_symb(RRC_tx_I_symb_out)#RRC_tx_I_symb_out
+            filtered_symb_Q=fir_filter_symbQ.filter_symb(RRC_tx_Q_symb_out)#RRC_tx_Q_symb_out
 
             #################################
 
@@ -218,12 +218,12 @@ def main():
             # print("RRC_rx_I_symb_out: " + str(RRC_rx_I_symb_out))
 
             ###############################
-            ds_rx_I.insert_symbol(Rx_I_symb_in)
-            ds_rx_Q.insert_symbol(Rx_Q_symb_in)
+            ds_rx_I.insert_symbol(Rx_I_symb_in)#Rx_I_symb_in
+            ds_rx_Q.insert_symbol(Rx_Q_symb_in)#Rx_Q_symb_in
 
             
             # Downsampling
-            if control == phase:
+            if control%(OS/2) == 0: #if control == phase:
                 #dsamp_I_symbols = np.roll(dsamp_I_symbols, 1)
                 #dsamp_Q_symbols = np.roll(dsamp_Q_symbols, 1)
                 #dsamp_I_symbols[0] = downSampling(RRC_rx_I_symb_out)  # 1 bit
@@ -238,15 +238,15 @@ def main():
                 # # Filtro Adaptivo
                 Slicer_I = ad_fil_I.loop_adaptive_filter(dsamp_I_symbol)
                 Slicer_Q = ad_fil_Q.loop_adaptive_filter(dsamp_Q_symbol)
+                
 
-                # if((Lsim*Nsymb)%2 == 0):
+            if control == phase:
                 LOG_EQ_O_I.append(ad_fil_I.get_eq_o())
                 LOG_SL_O_I.append(ad_fil_I.get_slicer_o())
                 LOG_ERR_I.append(ad_fil_I.get_error())
                 LOG_EQ_O_Q.append(ad_fil_Q.get_eq_o())
                 LOG_SL_O_Q.append(ad_fil_Q.get_slicer_o())
                 LOG_ERR_Q.append(ad_fil_Q.get_error())
-
 
                 #print("dsamp_I_symbols: " + str(dsamp_I_symbols))
                 # Demapper
