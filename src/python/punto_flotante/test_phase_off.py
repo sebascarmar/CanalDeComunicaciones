@@ -2,21 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from classes.phase_off import phase_off
-fs      = 50    # Sampling freq
-Delta_f = 10
 
 # Instancia objeto que genera desplazamiento de fase.
-offset_gen =  phase_off(fs, Delta_f)
+offset_gen =  phase_off()
 
+Nsymb   = 900 #4100, 2060, 1050, 520,270 
 
+symbolsI = 2*(np.random.uniform(-1,1,Nsymb)>0.0)-1;
+symbolsQ = 2*(np.random.uniform(-1,1,Nsymb)>0.0)-1;
+
+symbI_des = []
+symbQ_des = []
 ###########################################################################################
 #                                Test simple y "manual"                                   #
 ###########################################################################################
-
-#symbI = [1.0,-1.0,-1.0,1.0]
-#symbQ = [1.0,1.0,-1.0,-1.0]
-#symbI_des = []
-#symbQ_des = []
 
 #for j in range(100):
 #
@@ -43,15 +42,9 @@ offset_gen =  phase_off(fs, Delta_f)
 ###########################################################################################
 #                                     Test automático                                     #
 ###########################################################################################
-Nsymb   = 1000
 
-symbolsI = 2*(np.random.uniform(-1,1,Nsymb)>0.0)-1;
-symbolsQ = 2*(np.random.uniform(-1,1,Nsymb)>0.0)-1;
-
-symbI_des = []
-symbQ_des = []
 for x in range(len(symbolsI)):
-    (auxI, auxQ) = offset_gen.get_phase_off(symbolsI[x], symbolsQ[x])
+    (auxI, auxQ) = offset_gen.get_phase_off(symbolsI[x], symbolsQ[x],1) #1 a 5
     symbI_des.append(auxI)
     symbQ_des.append(auxQ)
 
