@@ -74,3 +74,15 @@ class phase_off:
         
         return (pReal_symb_w_offset, pImag_symb_w_offset)
 
+    
+    def get_fixed_off(self, RRC_tx_I_symb_out, RRC_tx_Q_symb_out, index):
+        self.titas = [np.pi/8, np.pi/4, np.pi/2, np.pi]
+        
+        ejO      = cmath.exp(1j*self.titas[index])
+        symb_IjQ = RRC_tx_I_symb_out + RRC_tx_Q_symb_out*1j
+        
+        symb_IjQ_with_fix_off = symb_IjQ*ejO
+        
+        return (symb_IjQ_with_fix_off.real, symb_IjQ_with_fix_off.imag)
+
+
