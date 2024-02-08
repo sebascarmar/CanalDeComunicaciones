@@ -45,6 +45,7 @@ symbQ_des = []
 
 for x in range(len(symbolsI)):
     (auxI, auxQ) = offset_gen.get_phase_off(symbolsI[x], symbolsQ[x],1) #1 a 5
+    #(auxI, auxQ) = offset_gen.get_fixed_off(symbolsI[x], symbolsQ[x],1) #1 a 5
     symbI_des.append(auxI)
     symbQ_des.append(auxQ)
 
