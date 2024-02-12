@@ -7,7 +7,8 @@ from classes.downsampler_Class      import downsampler
 from classes.demapper_Class         import demapper
 from classes.fir_filter             import fir_filter
 from classes.phase_off              import phase_off
-from classes.adaptive_filter        import adaptive_filter
+# from classes.adaptive_filter        import adaptive_filter
+from classes.filter_rx_class        import filter_rx
 
 from modules.tx_rcosine_procom      import *
 from modules.eyediagram             import *
@@ -22,7 +23,7 @@ def main():
     ##################################################################
     #                           INITIAL DEFS                         #
     ##################################################################
-    Lsim            = 10
+    Lsim            = 20
     enable_plots    = True
     BR              = 1000                      # BR baudrate
     beta            = 0.5                       # Rolloff
@@ -37,10 +38,15 @@ def main():
     offsetI         = 0
     offsetQ         = 0
     phase           = 0
-    EbNo            = 12                       # [dB]
+    EbNo            = 15                       # [dB]
     firfilter_order = 10
     NTAPS_ad_fil    = 51                        # Coeficientes del filtro adaptivo
     LMS_step        = 1e-3                      # Step del LMS
+    Kp              = 0.01                    # Consstante proporcional PLL
+    Ki              = Kp/1000                   # Constante integral PLL
+    Lat             = 0                         # Latencia PLL
+    timer_fcr_on    = 10*Nsymb
+    timer_cma_off   = 20*Nsymb
     
     PRBS_Q_seed     = 0b111111110
     PRBS_I_seed     = 0b110101010
@@ -66,11 +72,14 @@ def main():
 
     # Logueo Filtro Adaptivo
     LOG_EQ_O_I = []
+    LOG_EQ_FCR_I = []
     LOG_SL_O_I = []
     LOG_ERR_I  = []
     LOG_EQ_O_Q = []
+    LOG_EQ_FCR_Q = []
     LOG_SL_O_Q = []
     LOG_ERR_Q  = []
+    LOG_PHI    = []
 
     ##################################################################
     #                   CREACION DE OBJETOS                          #
@@ -105,12 +114,16 @@ def main():
     fir_filter_symbI = fir_filter(filter_coeff)
     fir_filter_symbQ = fir_filter(filter_coeff)
 
+    # Downsamplers
     ds_rx_I  = downsampler(OS) # Downsampler I
     ds_rx_Q  = downsampler(OS) # Downsampler Q
 
-    ad_fil_I = adaptive_filter(NTAPS_ad_fil,LMS_step)
-    ad_fil_Q = adaptive_filter(NTAPS_ad_fil,LMS_step)
-    
+    # Filtro adaptivo
+    # ad_fil_I = adaptive_filter(NTAPS_ad_fil,LMS_step)
+    # ad_fil_Q = adaptive_filter(NTAPS_ad_fil,LMS_step)
+    RX_filter = filter_rx(NTAPS_ad_fil,LMS_step,Kp,Ki,Lat,timer_fcr_on)#,timer_cma_off)
+
+    # Demapper
     rx_demapper = demapper(M)   
 
     # filtro RRC (root raised cosine) convolucionado consigo mismo
@@ -173,13 +186,18 @@ def main():
             LOG_SYMBS_Q_TX_RRC_OUT.append(RRC_tx_Q_symb_out)
 
             # Desfasaje de símbolos.
-            # (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out,1)
+            if((isim*Nsymb+i/OS)>(timer_fcr_on)):
+                (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out,1)
+                # (phased_symb_I, phased_symb_Q) = offset_gen.get_fixed_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out,0)# 0,1,2 o 3
+            else:
+                phased_symb_I = RRC_tx_I_symb_out
+                phased_symb_Q = RRC_tx_Q_symb_out
             #print("filter coef: " + str(RRC_tx_I.get_coef_for_control(control)))
             #print("RRC_tx_I_symb_out: " + str(RRC_tx_I_symb_out))
 
             #filtrado de símbolos.
-            filtered_symb_I=fir_filter_symbI.filter_symb(RRC_tx_I_symb_out)#RRC_tx_I_symb_out
-            filtered_symb_Q=fir_filter_symbQ.filter_symb(RRC_tx_Q_symb_out)#RRC_tx_Q_symb_out
+            filtered_symb_I=fir_filter_symbI.filter_symb(phased_symb_I)#RRC_tx_I_symb_out
+            filtered_symb_Q=fir_filter_symbQ.filter_symb(phased_symb_Q)#RRC_tx_Q_symb_out
 
             #################################
 
@@ -218,8 +236,8 @@ def main():
             # print("RRC_rx_I_symb_out: " + str(RRC_rx_I_symb_out))
 
             ###############################
-            ds_rx_I.insert_symbol(Rx_I_symb_in)#Rx_I_symb_in
-            ds_rx_Q.insert_symbol(Rx_Q_symb_in)#Rx_Q_symb_in
+            ds_rx_I.insert_symbol(Rx_I_symb_in)#Rx_I_symb_in/filtered_symb_I
+            ds_rx_Q.insert_symbol(Rx_Q_symb_in)#Rx_Q_symb_in/filtered_symb_Q
 
             
             # Downsampling
@@ -236,17 +254,30 @@ def main():
                 LOG_SYMBS_Q_DWS_OUT.append(dsamp_Q_symbol)
 
                 # # Filtro Adaptivo
-                Slicer_I = ad_fil_I.loop_adaptive_filter(dsamp_I_symbol)
-                Slicer_Q = ad_fil_Q.loop_adaptive_filter(dsamp_Q_symbol)
+                # Slicer_I = ad_fil_I.loop_adaptive_filter(dsamp_I_symbol)
+                # Slicer_Q = ad_fil_Q.loop_adaptive_filter(dsamp_Q_symbol)
+                (Slicer_I,Slicer_Q) = RX_filter.loop_rx_filter(dsamp_I_symbol, dsamp_Q_symbol)
                 
 
             if control == phase:
-                LOG_EQ_O_I.append(ad_fil_I.get_eq_o())
-                LOG_SL_O_I.append(ad_fil_I.get_slicer_o())
-                LOG_ERR_I.append(ad_fil_I.get_error())
-                LOG_EQ_O_Q.append(ad_fil_Q.get_eq_o())
-                LOG_SL_O_Q.append(ad_fil_Q.get_slicer_o())
-                LOG_ERR_Q.append(ad_fil_Q.get_error())
+                # LOG_EQ_O_I.append(ad_fil_I.get_eq_o())
+                # LOG_SL_O_I.append(ad_fil_I.get_slicer_o())
+                # LOG_ERR_I.append(ad_fil_I.get_error())
+                # LOG_EQ_O_Q.append(ad_fil_Q.get_eq_o())
+                # LOG_SL_O_Q.append(ad_fil_Q.get_slicer_o())
+                # LOG_ERR_Q.append(ad_fil_Q.get_error())
+
+                LOG_EQ_O_I.append(RX_filter.get_eq_o_I())
+                LOG_EQ_FCR_I.append(RX_filter.get_eq_fcr_I())
+                LOG_SL_O_I.append(RX_filter.get_slicer_I())
+                LOG_ERR_I .append(RX_filter.get_error_I())
+
+                LOG_EQ_O_Q.append(RX_filter.get_eq_o_Q())
+                LOG_EQ_FCR_Q.append(RX_filter.get_eq_fcr_Q())
+                LOG_SL_O_Q.append(RX_filter.get_slicer_Q())
+                LOG_ERR_Q .append(RX_filter.get_error_Q())
+
+                LOG_PHI.append(RX_filter.get_phi())
 
                 #print("dsamp_I_symbols: " + str(dsamp_I_symbols))
                 # Demapper
@@ -284,15 +315,15 @@ def main():
         print("offsetQ: " + str(offsetQ))
     
     if enable_plots:
-        plt.figure(figsize=[6,6])
-        plt.title('Constellation Tx')
-        plt.plot(LOG_SYMBS_I_TX_RRC_IN[100:len(LOG_SYMBS_I_TX_RRC_IN)], LOG_SYMBS_Q_TX_RRC_IN[100:len(LOG_SYMBS_Q_TX_RRC_IN)],'.',linewidth=2.0)
+        # plt.figure(figsize=[6,6])
+        # plt.title('Constellation Tx')
+        # plt.plot(LOG_SYMBS_I_TX_RRC_IN[100:len(LOG_SYMBS_I_TX_RRC_IN)], LOG_SYMBS_Q_TX_RRC_IN[100:len(LOG_SYMBS_Q_TX_RRC_IN)],'.',linewidth=2.0)
         
-        plt.xlim((-2, 2))
-        plt.ylim((-2, 2))
-        plt.grid(True)
-        plt.xlabel('Real')
-        plt.ylabel('Imag')
+        # plt.xlim((-2, 2))
+        # plt.ylim((-2, 2))
+        # plt.grid(True)
+        # plt.xlabel('Real')
+        # plt.ylabel('Imag')
 
         plt.figure(figsize=[6,6])
         plt.title('Constellation Tx OUT')
@@ -304,17 +335,17 @@ def main():
         plt.xlabel('Real')
         plt.ylabel('Imag')
 
-        plt.figure(figsize=[10,6])
-        plt.subplot(2,1,1)
-        plt.title('Tx RRC symbols I&Q')
-        plt.stem(np.arange(0,50),LOG_SYMBS_I_TX_OUT[0:50])
-        plt.grid(True)
-        plt.ylabel('Magnitud')
+        # plt.figure(figsize=[10,6])
+        # plt.subplot(2,1,1)
+        # plt.title('Tx RRC symbols I&Q')
+        # plt.stem(np.arange(0,50),LOG_SYMBS_I_TX_OUT[0:50])
+        # plt.grid(True)
+        # plt.ylabel('Magnitud')
         
-        plt.subplot(2,1,2)
-        plt.stem(np.arange(0,50),LOG_SYMBS_Q_TX_OUT[0:50])
-        plt.grid(True)
-        plt.ylabel('Magnitud')
+        # plt.subplot(2,1,2)
+        # plt.stem(np.arange(0,50),LOG_SYMBS_Q_TX_OUT[0:50])
+        # plt.grid(True)
+        # plt.ylabel('Magnitud')
         
         plt.figure(figsize=[6,6])
         plt.title('Constellation Rx In, post awgn')
@@ -326,18 +357,18 @@ def main():
         plt.xlabel('Real')
         plt.ylabel('Imag')    
             
-        eyediagram(LOG_SYMBS_I_RX_IN[100:len(LOG_SYMBS_I_RX_IN)], OS, 0, nbaud, 'Eyediagram RX I - rolloff: {}'.format(beta))
-        eyediagram(LOG_SYMBS_Q_RX_IN[100:len(LOG_SYMBS_Q_RX_IN)], OS, 0, nbaud, 'Eyediagram RX Q - rolloff: {}'.format(beta))
+        # eyediagram(LOG_SYMBS_I_RX_IN[100:len(LOG_SYMBS_I_RX_IN)], OS, 0, nbaud, 'Eyediagram RX I - rolloff: {}'.format(beta))
+        # eyediagram(LOG_SYMBS_Q_RX_IN[100:len(LOG_SYMBS_Q_RX_IN)], OS, 0, nbaud, 'Eyediagram RX Q - rolloff: {}'.format(beta))
         
-        plt.figure(figsize=[6,6])
-        plt.title('Constellation Rx RCC Out')
-        plt.plot(LOG_SYMB_I_RX_RRC_OUT[100:len(LOG_SYMB_I_RX_RRC_OUT)], LOG_SYMB_Q_RX_RRC_OUT[100:len(LOG_SYMB_Q_RX_RRC_OUT)],'.',linewidth=2.0)
+        # plt.figure(figsize=[6,6])
+        # plt.title('Constellation Rx RCC Out')
+        # plt.plot(LOG_SYMB_I_RX_RRC_OUT[100:len(LOG_SYMB_I_RX_RRC_OUT)], LOG_SYMB_Q_RX_RRC_OUT[100:len(LOG_SYMB_Q_RX_RRC_OUT)],'.',linewidth=2.0)
         
-        #plt.xlim((-2, 2))
-        #plt.ylim((-2, 2))
-        plt.grid(True)
-        plt.xlabel('Real')
-        plt.ylabel('Imag')
+        # #plt.xlim((-2, 2))
+        # #plt.ylim((-2, 2))
+        # plt.grid(True)
+        # plt.xlabel('Real')
+        # plt.ylabel('Imag')
         
         plt.figure(figsize=[6,6])
         plt.title('Constellation Rx Downsampling')
@@ -352,20 +383,49 @@ def main():
         #  -------- Plots Filtro Adaptivo ---------------------------------
         plt.figure(figsize=[10,6])
         plt.subplot(2,1,1)
-        plt.plot(LOG_EQ_O_I,'o')
+        plt.plot(LOG_EQ_O_I,'.')
         plt.grid(True)
         plt.ylabel('Salida FFE')
-        plt.title('Convergencia filtro adaptivo')
+        plt.title('Convergencia filtro adaptivo I')
         plt.subplot(2,1,2)
-        plt.plot(LOG_ERR_I)
+        plt.plot(np.log10(np.abs(LOG_ERR_I)))
         plt.grid(True)
         plt.xlabel('Simbolos')
         plt.ylabel('Error (Slicer_Out - Eq_Out)')
-        plt.title('Convergencia del error')
+        plt.title('Convergencia del error I')
 
         plt.figure(figsize=[10,6])
-        plt.plot(ad_fil_I.get_Coef_FFE())
+        plt.subplot(2,1,1)
+        plt.plot(LOG_EQ_O_Q,'.')
         plt.grid(True)
+        plt.ylabel('Salida FFE')
+        plt.title('Convergencia filtro adaptivo Q')
+        plt.subplot(2,1,2)
+        plt.plot(np.log10(np.abs(LOG_ERR_Q)))
+        plt.grid(True)
+        plt.xlabel('Simbolos')
+        plt.ylabel('Error (Slicer_Out - Eq_Out)')
+        plt.title('Convergencia del error Q')
+
+        # plt.figure(figsize=[10,6])
+        # plt.plot(ad_fil_I.get_Coef_FFE())
+        # plt.grid(True)
+
+        plt.figure(figsize=[10,6]) 
+        plt.plot(LOG_PHI) 
+        plt.title('FCR Output')
+        plt.ylabel('Rad')
+        plt.grid(True)      
+
+        plt.figure(figsize=[6,6])
+        plt.title('Constellation FSE Output + Slicer Input')
+        plt.plot(LOG_EQ_O_I[timer_fcr_on+100:len(LOG_EQ_O_I)], LOG_EQ_O_Q[timer_fcr_on+100:len(LOG_EQ_O_Q)],'.',linewidth=2.0,label='Sin Corrección')
+        plt.plot(LOG_EQ_FCR_I[timer_fcr_on+100:len(LOG_EQ_FCR_I)], LOG_EQ_FCR_Q[timer_fcr_on+100:len(LOG_EQ_FCR_Q)],'.',linewidth=2.0,label='Con Corrección')
+        plt.xlim((-2, 2))
+        plt.ylim((-2, 2))
+        plt.grid(True)
+        plt.xlabel('Real')
+        plt.ylabel('Imag')
 
         
         plt.show(block=False)

@@ -5,22 +5,26 @@ class adaptive_filter:
     def __init__(self,FFE_taps = 51,LMS_step = 1e-3):
         self.taps = FFE_taps
         self.step = LMS_step
+        self.delay_LMS = 0
+        self.taps_LMS = self.taps + self.delay_LMS
         self.alpha_leak  = 0                                 # Correccion tap leakeage
 
         self.Coef_FFE = np.zeros(self.taps)                  # Coeficientes del Ecualizador
         self.Coef_FFE[1+int((self.taps-1)/2)] = 1.0          # Inicializacion impulso
 
         self.FIFO_FFE = np.zeros(self.taps)                  # FIFO del FFE
-        self.FIFO_LMS = np.zeros(self.taps)                  # FIFO del LMS
+        self.FIFO_LMS = np.zeros(self.taps_LMS)             # FIFO del LMS
 
         self.eq_o       = 0                                  # Salida del filtro
         self.slicer_o   = 0                                  # Salida del Slicer
         self.error      = 0                                  # Diferencia entre slicer y filtro
         self.symcounter = False
 
-    def FFE_Shift(self,new_symbol):
+    def Input_Shift(self,new_symbol):
         self.FIFO_FFE    = np.roll(self.FIFO_FFE,1)          # Shiteo a la derecha
         self.FIFO_FFE[0] = new_symbol                        # Agrega un nuevo elemento
+        self.FIFO_LMS    = np.roll(self.FIFO_LMS,1)          # Shiteo a la derecha
+        self.FIFO_LMS[0] = new_symbol                        # Agrega un nuevo elemento
         return
     
     def FFE_Filter(self):
@@ -38,7 +42,8 @@ class adaptive_filter:
     
     def LMS(self,error):
         # Gradient Estimate
-        grad = error * np.conjugate(self.FIFO_FFE)
+        LMS_Delayed = self.FIFO_LMS[self.delay_LMS:self.taps_LMS]
+        grad = error * LMS_Delayed
         # Coeficient Update
         self.Coef_FFE = self.Coef_FFE*(1-self.step*self.alpha_leak) + self.step*grad
         return
