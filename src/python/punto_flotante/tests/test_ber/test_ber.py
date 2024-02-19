@@ -61,8 +61,7 @@ flog_ber_i.close()
 flog_ber_q.close()
 flog_ebno.close()
 
-cfg.print_cfg()
-
-for ebno_value in np.arange(1, 2, 0.5):
+for ebno_value in np.arange(0, 10, 1):
     cfg.EbNo = ebno_value
+    cfg.print_cfg()
     main(cfg, path_logs)
