@@ -61,9 +61,9 @@ class filter_rx:
             error_Q = self.ad_fil_Q.calculate_error(slicer_o_Q,eq_fcr_Q)
 
             ## FCR ----------------------------------------------
-            if self.symcounter > (self.fcr_on*2):
-                self.phi = self.fcr.PLL_process(eq_fcr_I, slicer_o_I, eq_fcr_Q, slicer_o_Q)
-                self.phi_conj = -1*self.phi
+            #if self.symcounter > (self.fcr_on*2):
+            #    self.phi = self.fcr.PLL_process(eq_fcr_I, slicer_o_I, eq_fcr_Q, slicer_o_Q)
+            #    self.phi_conj = -1*self.phi
 
             # Compensancion error
             error_fcr_I = self.FCR_conn_I(error_I,error_Q,self.phi_conj)# El angulo va conjugado

@@ -28,7 +28,7 @@ cfg.Lsim                = 50
 cfg.enable_plots        = False                     
 cfg.enable_file_log     = False                     
 cfg.BR                  = 25e6                      
-cfg.beta                = 0.5                       
+cfg.beta                = 0.9                       
 cfg.M                   = 4                         
 cfg.OS                  = 4                         
 cfg.nbaud               = 20                         
@@ -40,7 +40,7 @@ cfg.Nsymb               = 511
 cfg.offsetI             = 0                         
 cfg.offsetQ             = 0                         
 cfg.phase               = 0                         
-cfg.EbNo                = 5                         
+cfg.EbNo                = 3                         
 cfg.firfilter_order     = 10                        
 cfg.NTAPS_ad_fil        = 51                        
 cfg.LMS_step            = 1e-3                      
@@ -54,7 +54,6 @@ cfg.PRBS_I_seed         = 0b110101010
 cfg.enable_phase_shift  = False
 cfg.enable_ch_filter    = False
 cfg.enable_noise        = True
-cfg.enable_adap_filter  = True
 
 # Reset files before start test
 path_logs = "logs/test_ber_"
@@ -63,13 +62,19 @@ flog_ber_q          = open(path_logs + "BER_Q.txt", "wt")
 flog_ebno           = open(path_logs + "ebno.txt",  "wt")
 flog_align_pos_i    = open(path_logs + "align_pos_i.txt"        , "wt")
 flog_align_pos_q    = open(path_logs + "align_pos_q.txt"        , "wt")
+flog_lms_steps      = open(path_logs + "lms_steps.txt"          , "wt")
 flog_ber_i.close()
 flog_ber_q.close()
 flog_ebno.close()
 flog_align_pos_i.close()
 flog_align_pos_q.close()
 
-for ebno_value in np.arange(0, 10, 1):
-    cfg.EbNo = ebno_value
+LMS_step_array = [1e-2, 5e-3, 2e-3, 1e-3, 5e-4, 2e-4, 1e-4, 5e-5, 2e-5, 1e-5]
+
+for step_value in LMS_step_array:
+    cfg.LMS_step = step_value
     cfg.print_cfg()
+    flog_lms_steps.write(str(step_value)+"\n")
     main(cfg, path_logs)
+    
+flog_lms_steps.close()

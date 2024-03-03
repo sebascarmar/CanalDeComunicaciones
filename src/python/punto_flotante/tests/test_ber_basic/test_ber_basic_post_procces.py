@@ -2,7 +2,7 @@ import numpy                as np
 import math
 import matplotlib.pyplot    as plt
 
-path_logs = "logs/test_ber_"
+path_logs = "logs/test_ber_basic_"
 
 path_ber_i = path_logs + "BER_I.txt"
 path_ber_q = path_logs + "BER_Q.txt"
@@ -35,7 +35,7 @@ for idx_ebno in range(len(LOG_EBNO)):
     ber_teo.append(ber_t)
     
 plt.figure(figsize=[14,6])
-plt.title('BER vs EbNo - Adaptative filter receiver')
+plt.title('BER vs EbNo - RRC receiver')
 plt.semilogy(LOG_EBNO, ber_teo  , 'r', linewidth=2.0)
 plt.semilogy(LOG_EBNO, LOG_BER_I, 'b', linewidth=2.0)
 plt.semilogy(LOG_EBNO, LOG_BER_Q, 'g', linewidth=2.0)
@@ -49,5 +49,3 @@ plt.legend(['BER teo','BER I','BER Q'])
 plt.show(block=False)
 input('Press enter to finish: ')
 plt.close()
-
-

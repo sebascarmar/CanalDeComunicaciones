@@ -1,7 +1,7 @@
 #Este script es util para testear la prbs pero tambien para determinar una posible
 #optimizacion de tiempo en el correlador de ser necesario
 
-from initial_with_GUI.classes.prbs9_Class import prbs9
+from classes.prbs9_Class import prbs9
 def encontrar_primer_vector_no_periodico(array):
     longitud = len(array)
     for tamaño in range(1, longitud + 1):

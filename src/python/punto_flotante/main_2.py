@@ -18,7 +18,7 @@ import numpy as np
 from numpy                          import convolve
 import copy
 from scipy import signal
-
+ 
 def main(cfg, path_logs):
 
     ##################################################################

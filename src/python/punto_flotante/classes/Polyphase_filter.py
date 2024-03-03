@@ -42,5 +42,3 @@ class Polyphase_filter:
         for i in range(self.nbaud):
             symb_out += self.pol_filter[i][control] * symbols_in[i]
         return symb_out
-
-
