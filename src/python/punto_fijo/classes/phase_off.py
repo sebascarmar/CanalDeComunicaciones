@@ -4,30 +4,37 @@ import numpy as np
 import cmath
 import random
 
-# Teniendo como frecuencia de trabajo 100 MHz:
-#     f = 2^(N-1)*[(1024*4*T)^(-1)]
-#     f =   step *[(1024*4*T)^(-1)] (4 por los 4 cuartos del seno)
-#   -para step=1   =>  f_offset = 24.3 kHz
-#   -para step=2   =>  f_offset = 48.7 kHz
-#   -para step=4   =>  f_offset = 97.5 kHz
-#   -para step=8   =>  f_offset = 195.1 kHz
-#   -para step=10  =>  f_offset = 390.2 kHz
 
 class phase_off:
 
     def __init__(self, NBTot, NBFrac):
+        self.NBTot  = NBTot
+        self.NBFrac = NBFrac
+        
+        ### Variables aux. para obtener 1025 muestras del 1/4 de seno
         stepRad  = (np.pi/2)/1024
         wt       = np.arange(0., np.pi/2 + stepRad, stepRad)
         sin      = np.sin(wt)
-        self.sin = arrayFixedInt(NBTot, NBFrac, sin, 'S', 'trunc', 'saturate')
         
+        ### Valores de 1/4 de seno con 1025 valores cuantizados
+        self.sin = arrayFixedInt(NBTot, NBFrac, sin, 'S', 'trunc', 'saturate')
+        ### Escritura de valores del seno en un archivo
+        with open('cuartoDeSeno.txt', 'w') as archivo:
+            for i in range(len(self.sin)):
+                archivo.write(str(int(self.sin[i].fValue*(2**NBFrac))) + '\n')
+        
+        ### Punteros y contador para armado del seno y coseno
         self.i       = 0
         self.j       = 1024
         self.semicycle_counter = 1
         
-        self.symbI = DeFixedInt(NBTot, NBFrac, 'S', 'trunc', 'saturate') 
-        self.symbQ = DeFixedInt(NBTot, NBFrac, 'S', 'trunc', 'saturate') 
+        ### Registro para recibir los símbolos de entrada (simula carga de dato)
+        reg_in_I = np.zeros(2)
+        reg_in_Q = np.zeros(2)
+        self.symbI = arrayFixedInt(NBTot, NBFrac, reg_in_I, 'S', 'trunc', 'saturate')
+        self.symbQ = arrayFixedInt(NBTot, NBFrac, reg_in_Q, 'S', 'trunc', 'saturate')
         
+        ### Productos y sumas con su respectiva resolución
         self.prodParcial_I_a = DeFixedInt(2*NBTot, 2*NBFrac, 'S', 'trunc', 'saturate') 
         self.prodParcial_I_b = DeFixedInt(2*NBTot, 2*NBFrac, 'S', 'trunc', 'saturate') 
         
@@ -37,11 +44,9 @@ class phase_off:
         self.sumaPReal = DeFixedInt(2*NBTot+1, 2*NBFrac, 'S', 'trunc', 'saturate') 
         self.sumaPImag = DeFixedInt(2*NBTot+1, 2*NBFrac, 'S', 'trunc', 'saturate') 
         
+        ### Variables de salida
         self.sym_I_con_off = DeFixedInt(NBTot, NBFrac, 'S', 'trunc', 'saturate') 
         self.sym_Q_con_off = DeFixedInt(NBTot, NBFrac, 'S', 'trunc', 'saturate') 
-
-        self.NBTot  = NBTot
-        self.NBFrac = NBFrac
 
 #        #### Gráficas del cuarto de seno
 #        aux = []
@@ -112,16 +117,30 @@ class phase_off:
             print("Error con contador de ciclos")            
 
 
-    def get_phase_off(self, RRC_tx_I_symb_out, RRC_tx_Q_symb_out, step):
-        # Puede recorrer de a 1, 2 , 4 u 8 muestras
-        self.stepN = 2**(int(step)-1) if(step>0 and step<5) else 1
-        
-        # Asigna los valores de los símbolos recibidos
-        self.symbI.value = RRC_tx_I_symb_out # Si lo que recibo es float64
-        #self.symbI.assign( RRC_tx_I_symb_out) # Si lo que recibo es FixedInt
+    # Teniendo como frecuencia de trabajo 100 MHz:
+    #     f = 2^(N-1)*[(1024*4*T)^(-1)]
+    #     f =   step *[(1024*4*T)^(-1)] (4 por los 4 cuartos del seno)
+    #   -para step=1   =>  f_offset = 24.3 kHz
+    #   -para step=2   =>  f_offset = 48.7 kHz
+    #   -para step=4   =>  f_offset = 97.5 kHz
+    #   -para step=8   =>  f_offset = 195.1 kHz
+    #   -para step=10  =>  f_offset = 390.2 kHz
 
-        self.symbQ.value = RRC_tx_Q_symb_out  # Si lo que recibo es float64
-        #self.symbQ.assign( RRC_tx_Q_symb_out) # Si lo que recibo es FixedInt
+    def get_phase_off(self, RRC_tx_I_symb_out, RRC_tx_Q_symb_out, N):
+        # Puede recorrer de a 1, 2 , 4 u 8 muestras
+        self.stepN = 2**(int(N)-1) if(N>0 and N<5) else 1
+        
+        ### Desplaza y carga el símb. para la comp. en el siguiente clock
+        ### El símb. en i=1 asemeja a la carga del reg. con el dato del clock anterior
+        self.symbI          = np.roll(self.symbI, 1)
+        self.symbI[0].value = RRC_tx_I_symb_out # Si lo que recibo es float64
+        #self.symbI[0].assign( RRC_tx_I_symb_out) # Si lo que recibo es FixedInt
+        
+        ### Desplaza y carga el símb. para la comp. en el siguiente clock
+        ### El símb. en i=1 asemeja a la carga del reg. con el dato del clock anterior
+        self.symbQ          = np.roll(self.symbQ, 1)
+        self.symbQ[0].value = RRC_tx_Q_symb_out  # Si lo que recibo es float64
+        #self.symbQ[0].assign( RRC_tx_Q_symb_out) # Si lo que recibo es FixedInt
         #print("symI:",self.symbI, "\t symQ:", self.symbQ) #Debug
         
         ### Las operaciones a realizar son:
@@ -129,12 +148,12 @@ class phase_off:
         ### symbQ_des = I*sen[wt]+Q*cos[wt]
         
         ### Productos parciales
-        self.prodParcial_I_a.assign(self.symbI*self.__cose(self.j))
-        self.prodParcial_I_b.assign(self.symbQ*self.__seno(self.i))
+        self.prodParcial_I_a.assign(self.symbI[1]*self.__cose(self.j))
+        self.prodParcial_I_b.assign(self.symbQ[1]*self.__seno(self.i))
         #print("prodI_a:",self.prodParcial_I_a, "\t prodI_b:", self.prodParcial_I_b) #Debug
         
-        self.prodParcial_Q_a.assign(self.symbI*self.__seno(self.i))
-        self.prodParcial_Q_b.assign(self.symbQ*self.__cose(self.j))
+        self.prodParcial_Q_a.assign(self.symbI[1]*self.__seno(self.i))
+        self.prodParcial_Q_b.assign(self.symbQ[1]*self.__cose(self.j))
         #print("prodQ_a:",self.prodParcial_Q_a, "\t prodQ_b:", self.prodParcial_Q_b) #Debug
         
         ### Sumas

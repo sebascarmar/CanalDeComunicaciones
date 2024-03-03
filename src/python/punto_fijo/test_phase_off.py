@@ -45,24 +45,61 @@ offset_gen =  phase_off(NBTot,NBFrac)
 ###########################################################################################
 #                                     Test automático                                     #
 ###########################################################################################
-Nsymb   = 900 #4100, 2060, 1050, 520,270 
+### Número de ciclos
+iteraciones  = 270 #4100, 2060, 1050, 520,270 
 
-symbolsI = 2.0*(np.random.uniform(-1.0,1.0,Nsymb)>0.0)-1.0;
-symbolsQ = 2.0*(np.random.uniform(-1.0,1.0,Nsymb)>0.0)-1.0;
+### Frecuencia de offset
+freq = 4 #2,3,4 (24k3,48k7,97k5,195k1,390k2)
+
+### PRBS I
+reg_PRBS_I  = np.array([0,1,0,1,0,1,0,1,1])
+
+### PRBS Q
+reg_PRBS_Q  = np.array([0,1,1,1,1,1,1,1,1])
+
+### Logueo
+symbolsI = []
+symbolsQ = []
 
 symbI_des = []
 symbQ_des = []
-for x in range(len(symbolsI)):
-    (auxI, auxQ) = offset_gen.get_phase_off(symbolsI[x], symbolsQ[x],1)
+
+for i in range(iteraciones):
+    # Obtiene la salida de la prbs
+    symbI = -1.0 if(reg_PRBS_I[8]) else 1.0
+    # Calcula el nuevo bit de entrada al registro
+    new_in   = reg_PRBS_I[4]^reg_PRBS_I[8]
+    # Desplaza el registro e ingresa el nuevo bit con LSB
+    reg_PRBS_I    = np.roll(reg_PRBS_I,1)
+    reg_PRBS_I[0] = new_in
+    
+    # Obtiene la salida de la prbs
+    symbQ = -1.0 if(reg_PRBS_Q[8]) else 1.0
+    # Calcula el nuevo bit de entrada al registro
+    new_in   = reg_PRBS_Q[4]^reg_PRBS_Q[8]
+    # Desplaza el registro e ingresa el nuevo bit con LSB
+    reg_PRBS_Q    = np.roll(reg_PRBS_Q,1)
+    reg_PRBS_Q[0] = new_in
+    
+
+    ### Generación de desfasaje
+    (auxI, auxQ) = offset_gen.get_phase_off(symbI, symbQ,freq)
+
+    ### Guarda los símbolos generados
+    symbolsI.append(symbI)
+    symbolsQ.append(symbQ)
+    ### Guarda los símbolos generados con el offset de fase
     symbI_des.append(auxI)
     symbQ_des.append(auxQ)
 
-offset = 0
+
+### Gráfica
 plt.figure(figsize=[6,6])
-plt.plot(symbolsI, symbolsQ, 'bo', linewidth=2.0, label=b'Constelacion original')
-plt.plot(symbI_des, symbQ_des, 'r.', linewidth=2.0, label=b'Constelacion desfasada')
+plt.plot(symbolsI, symbolsQ, 'bo', linewidth=2.0, label='Constelacion original')
+plt.plot(symbI_des, symbQ_des, 'r.', linewidth=2.0, label='Constelacion desfasada')
 plt.xlim((-2, 2))
 plt.ylim((-2, 2))
+plt.legend()
 plt.grid(True)
 plt.xlabel('Real')
 plt.ylabel('Imag')
