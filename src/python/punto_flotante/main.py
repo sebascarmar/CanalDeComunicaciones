@@ -111,6 +111,8 @@ def main(cfg, path_logs):
     flog_ebno               = open(path_logs + "ebno.txt"               , "a")  #append data at the end of the file
     flog_align_pos_i        = open(path_logs + "align_pos_i.txt"        , "a")
     flog_align_pos_q        = open(path_logs + "align_pos_q.txt"        , "a")
+    flog_errors_bit_i       = open(path_logs + "errors_bit_i.txt"        , "wt")
+    flog_errors_bit_q       = open(path_logs + "errors_bit_q.txt"        , "wt")
     ##################################################################
     #                   CREACION DE OBJETOS                          #
     ##################################################################
@@ -139,6 +141,13 @@ def main(cfg, path_logs):
     gng_i  = awgn_noise_generator(M, OS, EbNo)
     gng_q  = awgn_noise_generator(M, OS, EbNo)
     
+    #Filtro antialias
+    
+    lowpass_filter = signal.firwin(10, fc ,window='hamming', nyq=BR)
+    
+    antialias_filter_I = fir_filter(lowpass_filter)
+    antialias_filter_Q = fir_filter(lowpass_filter)
+
     # Filtro adaptivo
     RX_filter = filter_rx(NTAPS_ad_fil, LMS_step, Kp, Ki, Lat, timer_fcr_on)#,timer_cma_off)
     
@@ -226,10 +235,17 @@ def main(cfg, path_logs):
             LOG_SYMBS_I_RX_IN.append(Rx_I_symb_in)
             LOG_SYMBS_Q_RX_IN.append(Rx_Q_symb_in)
             
-            ds_rx_I.insert_symbol(Rx_I_symb_in)
-            ds_rx_Q.insert_symbol(Rx_Q_symb_in)
+            #ds_rx_I.insert_symbol(Rx_I_symb_in)
+            #ds_rx_Q.insert_symbol(Rx_Q_symb_in)
             
             if enable_adap_filter:
+                
+                aaf_rx_I = antialias_filter_I.filter_symb(Rx_I_symb_in)
+                aaf_rx_Q = antialias_filter_Q.filter_symb(Rx_Q_symb_in)
+                
+                ds_rx_I.insert_symbol(aaf_rx_I)
+                ds_rx_Q.insert_symbol(aaf_rx_Q)
+                
                 # Downsampling
                 if control%(OS/2) == 0: #if control == phase:
                     dsamp_I_symbol = ds_rx_I.get_symbol(0)
@@ -256,6 +272,9 @@ def main(cfg, path_logs):
                     rx_I_bit_out = rx_demapper.get_bit(Slicer_I)
                     rx_Q_bit_out = rx_demapper.get_bit(Slicer_Q)
             else:
+                ds_rx_I.insert_symbol(Rx_I_symb_in)
+                ds_rx_Q.insert_symbol(Rx_Q_symb_in)
+                
                 buffer_I_rx = np.roll(buffer_I_rx, 1)
                 buffer_Q_rx = np.roll(buffer_Q_rx, 1)
 
@@ -277,6 +296,8 @@ def main(cfg, path_logs):
                     ber_rxQ.contador_bits()
                     ber_rxI.contador_errores(prbs_I_bits_out[offsetI], rx_I_bit_out)
                     ber_rxQ.contador_errores(prbs_Q_bits_out[offsetQ], rx_Q_bit_out)
+                    flog_errors_bit_i.write(str(ber_rxI.bits_errores)+"\n")
+                    flog_errors_bit_q.write(str(ber_rxQ.bits_errores)+"\n")
 
                 ber_rxI.insert_tx_bit(prbs_I_bits_out[0])
                 ber_rxQ.insert_tx_bit(prbs_Q_bits_out[0])
@@ -363,6 +384,8 @@ def main(cfg, path_logs):
     flog_ebno                   .close()
     flog_align_pos_i            .close()
     flog_align_pos_q            .close()
+    flog_errors_bit_i           .close()
+    flog_errors_bit_q           .close()
     
     if enable_plots:
         # plt.figure(figsize=[6,6])
@@ -461,11 +484,11 @@ def main(cfg, path_logs):
         # plt.plot(ad_fil_I.get_Coef_FFE())
         # plt.grid(True)
 
-        plt.figure(figsize=[10,6]) 
-        plt.plot(LOG_PHI) 
-        plt.title('FCR Output')
-        plt.ylabel('Rad')
-        plt.grid(True)      
+        #plt.figure(figsize=[10,6]) 
+        #plt.plot(LOG_PHI) 
+        #plt.title('FCR Output')
+        #plt.ylabel('Rad')
+        #plt.grid(True)      
 
         plt.figure(figsize=[6,6])
         plt.title('Constellation FSE Output + Slicer Input')

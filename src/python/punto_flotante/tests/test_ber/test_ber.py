@@ -1,6 +1,7 @@
 import sys
 import os
 import numpy as np
+import matplotlib.pyplot    as plt
  
 # getting the name of the directory
 # where the this file is present.
@@ -51,7 +52,7 @@ cfg.timer_fcr_on        = 10*cfg.Nsymb
 cfg.timer_cma_off       = 20*cfg.Nsymb              
 cfg.PRBS_Q_seed         = 0b111111110               
 cfg.PRBS_I_seed         = 0b110101010               
-cfg.enable_phase_shift  = False
+cfg.enable_phase_shift  = True
 cfg.enable_ch_filter    = False
 cfg.enable_noise        = True
 cfg.enable_adap_filter  = True
@@ -73,3 +74,17 @@ for ebno_value in np.arange(0, 10, 1):
     cfg.EbNo = ebno_value
     cfg.print_cfg()
     main(cfg, path_logs)
+    
+#LOG_ERROS_I = []
+#path_errors_i = path_logs + "errors_bit_i.txt"
+#with open(path_errors_i) as f:
+#    for line in f.readlines():
+#        LOG_ERROS_I.append(float(line))
+#
+#plt.figure(figsize=[14,6])
+#plt.xlabel('Bits totales')
+#plt.ylabel('Errores de')
+#plt.plot(LOG_ERROS_I)
+#plt.show(block=False)
+#input('Press enter to finish: ')
+#plt.close()
