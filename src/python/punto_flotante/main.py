@@ -8,6 +8,7 @@ from classes.demapper_Class         import demapper
 from classes.fir_filter             import fir_filter
 from classes.phase_off              import phase_off
 # from classes.adaptive_filter        import adaptive_filter
+from classes.AGC                    import AGC
 from classes.filter_rx_class        import filter_rx
 from classes.config_Class           import config
 
@@ -47,11 +48,11 @@ def main(cfg, path_logs):
     Kp                  = cfg.Kp                 # Consstante proporcional PLL
     Ki                  = cfg.Ki                 # Constante integral PLL
     Lat                 = cfg.Lat                # Latencia PLL
+    delay_LMS           = cfg.delay_LMS
     timer_fcr_on        = cfg.timer_fcr_on       
-    timer_cma_off       = cfg.timer_cma_off      
     PRBS_Q_seed         = cfg.PRBS_Q_seed        
     PRBS_I_seed         = cfg.PRBS_I_seed        
-    enable_phase_shift  = cfg.enable_phase_shift
+    enable_phase_shift  = cfg.enable_phase_shift 
     enable_ch_filter    = cfg.enable_ch_filter
     enable_noise        = cfg.enable_noise
     enable_adap_filter  = cfg.enable_adap_filter
@@ -131,25 +132,28 @@ def main(cfg, path_logs):
     offset_gen =  phase_off() # Instancia objeto que genera desplazamiento de fase.
 
     #Generador de coeficientes del filtro fir
-    filter_coeff = signal.firwin(firfilter_order, fc ,window='hamming', nyq=fs/2)
+    CH_filter_coeff = signal.firwin(numtaps=firfilter_order, cutoff=BR ,window='hamming', fs=4*BR)
 
-    #Generador del filtro fir
-    fir_filter_symbI = fir_filter(filter_coeff)
-    fir_filter_symbQ = fir_filter(filter_coeff)
+    # Filtro de canal
+    fir_filter_symbI = fir_filter(CH_filter_coeff)
+    fir_filter_symbQ = fir_filter(CH_filter_coeff)
     
     # gauss noise generator
     gng_i  = awgn_noise_generator(M, OS, EbNo)
     gng_q  = awgn_noise_generator(M, OS, EbNo)
     
-    #Filtro antialias
+    #Coeficientes del AAF
+    AAF_filter_coeff = signal.firwin(numtaps=20, cutoff=BR/2 ,window='hamming', fs=2*BR)
     
-    lowpass_filter = signal.firwin(10, fc ,window='hamming', nyq=BR)
-    
-    antialias_filter_I = fir_filter(lowpass_filter)
-    antialias_filter_Q = fir_filter(lowpass_filter)
+    #Filtros Antialias
+    antialias_filter_I = fir_filter(AAF_filter_coeff)
+    antialias_filter_Q = fir_filter(AAF_filter_coeff)
+
+    agc_i = AGC(20,1)
+    agc_q = AGC(20,1)
 
     # Filtro adaptivo
-    RX_filter = filter_rx(NTAPS_ad_fil, LMS_step, Kp, Ki, Lat, timer_fcr_on)#,timer_cma_off)
+    RX_filter = filter_rx(NTAPS_ad_fil, LMS_step, Kp, Ki, Lat, delay_LMS, timer_fcr_on, frc_enable=enable_phase_shift)#,timer_cma_off)
     
     # Filtro receptor (alternativo)
     buffer_I_rx = np.zeros(len(filt))
@@ -253,9 +257,12 @@ def main(cfg, path_logs):
 
                     LOG_SYMBS_I_DWS_OUT.append(dsamp_I_symbol)
                     LOG_SYMBS_Q_DWS_OUT.append(dsamp_Q_symbol)
-
+                    
+                    agc_out_I = agc_i.AGC_module(dsamp_I_symbol)
+                    agc_out_Q = agc_q.AGC_module(dsamp_Q_symbol)
+                    
                     # # Filtro Adaptivo
-                    (Slicer_I,Slicer_Q) = RX_filter.loop_rx_filter(dsamp_I_symbol, dsamp_Q_symbol)
+                    (Slicer_I,Slicer_Q) = RX_filter.loop_rx_filter(agc_out_I, agc_out_Q)
                 if control == phase:
                     LOG_EQ_O_I.append(RX_filter.get_eq_o_I())
                     LOG_EQ_FCR_I.append(RX_filter.get_eq_fcr_I())
@@ -291,7 +298,7 @@ def main(cfg, path_logs):
             
             # BER
             if control == phase:
-                if isim > 20:
+                if isim > 100:
                     ber_rxI.contador_bits()
                     ber_rxQ.contador_bits()
                     ber_rxI.contador_errores(prbs_I_bits_out[offsetI], rx_I_bit_out)
@@ -480,15 +487,15 @@ def main(cfg, path_logs):
         plt.ylabel('Error (Slicer_Out - Eq_Out)')
         plt.title('Convergencia del error Q')
 
-        # plt.figure(figsize=[10,6])
-        # plt.plot(ad_fil_I.get_Coef_FFE())
-        # plt.grid(True)
+        plt.figure(figsize=[10,6])
+        plt.plot(RX_filter.ad_fil_I.get_Coef_FFE())
+        plt.grid(True)
 
-        #plt.figure(figsize=[10,6]) 
-        #plt.plot(LOG_PHI) 
-        #plt.title('FCR Output')
-        #plt.ylabel('Rad')
-        #plt.grid(True)      
+        plt.figure(figsize=[10,6]) 
+        plt.plot(LOG_PHI) 
+        plt.title('FCR Output')
+        plt.ylabel('Rad')
+        plt.grid(True)      
 
         plt.figure(figsize=[6,6])
         plt.title('Constellation FSE Output + Slicer Input')

@@ -4,10 +4,10 @@ from classes.adaptive_filter        import adaptive_filter
 from classes.PLL_Class              import PLL_Class
 
 class filter_rx:
-    def __init__(self, FFE_taps = 51, LMS_step = 1e-3, Kp = 0.02, Ki = 0.00002, Lat = 0, fcr_on=0):
+    def __init__(self, FFE_taps = 51, LMS_step = 1e-3, Kp = 0.02, Ki = 0.00002, Lat = 0, LMS_delay = 0, fcr_on=0, frc_enable=True):
         # Instanciación Filtros Adaptivos
-        self.ad_fil_I       = adaptive_filter(FFE_taps, LMS_step)
-        self.ad_fil_Q       = adaptive_filter(FFE_taps, LMS_step)
+        self.ad_fil_I       = adaptive_filter(FFE_taps, LMS_step, LMS_delay)
+        self.ad_fil_Q       = adaptive_filter(FFE_taps, LMS_step, LMS_delay)
         # Instanciación FCR
         self.fcr            = PLL_Class(Kp,Ki,Lat)
 
@@ -25,6 +25,12 @@ class filter_rx:
         self.error_fcr_Q    = 0
         self.symcounter     = 0
         self.fcr_on         = fcr_on
+        self.fcr_enable     = frc_enable
+        self.error_sl_i     = 0
+        self.error_sl_q     = 0
+        self.auxprint       = True
+        print("FCR enabled: {}".format(self.fcr_enable))
+        print("FCR on: {}".format(self.fcr_on))
 
 
     def loop_rx_filter(self, symbI, symbQ):
@@ -49,7 +55,9 @@ class filter_rx:
         # Downsample by 2 
         if(self.symcounter%2 == 0):
             # Compensancion salida FSE
-            self.phi = 0 #FORCED
+            if self.fcr_enable == False:
+                self.phi = 0 #FORCED
+                
             eq_fcr_I = self.FCR_conn_I(eq_o_I, eq_o_Q, self.phi)
             eq_fcr_Q = self.FCR_conn_Q(eq_o_I, eq_o_Q, self.phi)
 
@@ -62,15 +70,26 @@ class filter_rx:
             error_Q = self.ad_fil_Q.calculate_error(slicer_o_Q, eq_fcr_Q)
 
             ## FCR ----------------------------------------------
-            #if self.symcounter > (self.fcr_on*2):
-            #    self.phi = self.fcr.PLL_process(eq_fcr_I, slicer_o_I, eq_fcr_Q, slicer_o_Q)
-            #    self.phi_conj = -1*self.phi
+            if self.fcr_enable == True:
+                if self.symcounter > (self.fcr_on*2):
+                    if self.auxprint == True:
+                        self.auxprint = False
+                        print("FRC enabled after {} symbols".format(self.symcounter))
+                    self.phi = self.fcr.PLL_process(eq_fcr_I, slicer_o_I, eq_fcr_Q, slicer_o_Q)
+                    self.phi_conj = -1*self.phi
 
             # Compensancion error
             error_fcr_I = self.FCR_conn_I(error_I, error_Q, self.phi_conj)# El angulo va conjugado
             error_fcr_Q = self.FCR_conn_Q(error_I, error_Q, self.phi_conj)
                 
             ## LMS -----------------------------------------------
+            
+            #self.error_sl_i = self.ad_fil_I.calculate_error(self.ad_fil_I.Slicer(eq_o_I), eq_o_I)
+            #self.error_sl_q = self.ad_fil_Q.calculate_error(self.ad_fil_I.Slicer(eq_o_Q), eq_o_Q)
+            
+            #self.ad_fil_I.LMS(self.error_sl_i)
+            #self.ad_fil_Q.LMS(self.error_sl_q)
+            
             self.ad_fil_I.LMS(error_fcr_I)
             self.ad_fil_Q.LMS(error_fcr_Q)
 

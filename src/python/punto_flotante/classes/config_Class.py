@@ -24,8 +24,8 @@ class config:
         self.Kp                     = 0
         self.Ki                     = 0
         self.Lat                    = 0
+        self.delay_LMS              = 0
         self.timer_fcr_on           = 0
-        self.timer_cma_off          = 0
         self.PRBS_Q_seed            = 0
         self.PRBS_I_seed            = 0
         self.enable_phase_shift     = 0
@@ -60,8 +60,8 @@ class config:
         print('Kp                   : ', self.Kp                    )
         print('Ki                   : ', self.Ki                    )
         print('Lat                  : ', self.Lat                   )
+        print('delay_LMS            : ', self.delay_LMS             )
         print('timer_fcr_on         : ', self.timer_fcr_on          )
-        print('timer_cma_off        : ', self.timer_cma_off         )
         print('PRBS_Q_seed          : ', self.PRBS_Q_seed           )
         print('PRBS_I_seed          : ', self.PRBS_I_seed           )
         print('Enable_phase_shift   : ', self.enable_phase_shift    )

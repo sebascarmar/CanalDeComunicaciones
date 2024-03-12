@@ -11,7 +11,6 @@ class PLL_Class:
         self.error_int  = np.zeros(2)
         self.nco_in     = np.zeros(2)
         self.tita_out   = np.zeros(2)
-        self.tita_delay = np.zeros(2)
         self.tita_delay = np.zeros(2)               # Realimentación
         self.DELAY_LINE = np.zeros(self.Lat + 1)  
 
@@ -53,4 +52,5 @@ class PLL_Class:
         self.tita_delay[0]  = self.DELAY_LINE[0]
 
 
-        return self.tita_out[0]#, np.conj(self.tita_out)       
+        #return self.tita_out[0]#, np.conj(self.tita_out)       
+        return self.tita_delay[0]#, np.conj(self.tita_out)

@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class adaptive_filter:
-    def __init__(self, FFE_taps = 51, LMS_step = 1e-3):
+    def __init__(self, FFE_taps = 51, LMS_step = 1e-3, delay = 0):
         self.taps       = FFE_taps
         self.step       = LMS_step
-        self.delay_LMS  = 0
+        self.delay_LMS  = delay
         self.taps_LMS   = self.taps + self.delay_LMS
         self.alpha_leak = 0                                 # Correccion tap leakeage
 
