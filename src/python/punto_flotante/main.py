@@ -112,8 +112,8 @@ def main(cfg, path_logs):
     flog_ebno               = open(path_logs + "ebno.txt"               , "a")  #append data at the end of the file
     flog_align_pos_i        = open(path_logs + "align_pos_i.txt"        , "a")
     flog_align_pos_q        = open(path_logs + "align_pos_q.txt"        , "a")
-    flog_errors_bit_i       = open(path_logs + "errors_bit_i.txt"        , "wt")
-    flog_errors_bit_q       = open(path_logs + "errors_bit_q.txt"        , "wt")
+    #flog_errors_bit_i       = open(path_logs + "errors_bit_i.txt"        , "wt")
+    #flog_errors_bit_q       = open(path_logs + "errors_bit_q.txt"        , "wt")
     ##################################################################
     #                   CREACION DE OBJETOS                          #
     ##################################################################
@@ -303,8 +303,8 @@ def main(cfg, path_logs):
                     ber_rxQ.contador_bits()
                     ber_rxI.contador_errores(prbs_I_bits_out[offsetI], rx_I_bit_out)
                     ber_rxQ.contador_errores(prbs_Q_bits_out[offsetQ], rx_Q_bit_out)
-                    flog_errors_bit_i.write(str(ber_rxI.bits_errores)+"\n")
-                    flog_errors_bit_q.write(str(ber_rxQ.bits_errores)+"\n")
+                    #flog_errors_bit_i.write(str(ber_rxI.bits_errores)+"\n")
+                    #flog_errors_bit_q.write(str(ber_rxQ.bits_errores)+"\n")
 
                 ber_rxI.insert_tx_bit(prbs_I_bits_out[0])
                 ber_rxQ.insert_tx_bit(prbs_Q_bits_out[0])
@@ -391,8 +391,8 @@ def main(cfg, path_logs):
     flog_ebno                   .close()
     flog_align_pos_i            .close()
     flog_align_pos_q            .close()
-    flog_errors_bit_i           .close()
-    flog_errors_bit_q           .close()
+    #flog_errors_bit_i           .close()
+    #flog_errors_bit_q           .close()
     
     if enable_plots:
         # plt.figure(figsize=[6,6])

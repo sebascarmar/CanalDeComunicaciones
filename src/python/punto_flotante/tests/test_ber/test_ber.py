@@ -25,7 +25,7 @@ from classes.config_Class import config
 
 cfg = config()
 
-cfg.Lsim                = 200                        
+cfg.Lsim                = 2000                        
 cfg.enable_plots        = False                     
 cfg.enable_file_log     = False                     
 cfg.BR                  = 25e6                      
@@ -53,7 +53,7 @@ cfg.timer_fcr_on        = 10*cfg.Nsymb
 cfg.PRBS_Q_seed         = 0b111111110               
 cfg.PRBS_I_seed         = 0b110101010               
 cfg.enable_phase_shift  = True
-cfg.enable_ch_filter    = False
+cfg.enable_ch_filter    = True
 cfg.enable_noise        = True
 cfg.enable_adap_filter  = True
 
@@ -70,7 +70,7 @@ flog_ebno.close()
 flog_align_pos_i.close()
 flog_align_pos_q.close()
 
-for ebno_value in np.arange(3, 10, 1):
+for ebno_value in np.arange(6, 15, 1):
     cfg.EbNo = ebno_value
     cfg.print_cfg()
     main(cfg, path_logs)
