@@ -25,37 +25,41 @@ def main(cfg, path_logs):
     ##################################################################
     #                           INITIAL DEFS                         #
     ##################################################################
-    Lsim                = cfg.Lsim                        
-    enable_plots        = cfg.enable_plots
-    enable_file_log     = cfg.enable_file_log
-    BR                  = cfg.BR                 # BR baudrate
-    beta                = cfg.beta               # Rolloff
-    M                   = cfg.M                  # QPSK modulation factor
-    OS                  = cfg.OS                 # Oversampling
-    nbaud               = cfg.nbaud              # Bauds
-    Norm_enable         = cfg.Norm_enable        # Norm_enablealization enable
-    fs                  = cfg.fs                 # Sampling freq
-    fc                  = cfg.fc                 
-    filter_select       = cfg.filter_select      # True: Root raised cosine, False: Raised cosine
-    Nsymb               = cfg.Nsymb              # Total symbols
-    offsetI             = cfg.offsetI            
-    offsetQ             = cfg.offsetQ            
-    phase               = cfg.phase              
-    EbNo                = cfg.EbNo               # [dB]
-    firfilter_order     = cfg.firfilter_order    
-    NTAPS_ad_fil        = cfg.NTAPS_ad_fil       # Coeficientes del filtro adaptivo
-    LMS_step            = cfg.LMS_step           # Step del LMS
-    Kp                  = cfg.Kp                 # Consstante proporcional PLL
-    Ki                  = cfg.Ki                 # Constante integral PLL
-    Lat                 = cfg.Lat                # Latencia PLL
-    delay_LMS           = cfg.delay_LMS
-    timer_fcr_on        = cfg.timer_fcr_on       
-    PRBS_Q_seed         = cfg.PRBS_Q_seed        
-    PRBS_I_seed         = cfg.PRBS_I_seed        
-    enable_phase_shift  = cfg.enable_phase_shift 
-    enable_ch_filter    = cfg.enable_ch_filter
-    enable_noise        = cfg.enable_noise
-    enable_adap_filter  = cfg.enable_adap_filter
+    Lsim                    = cfg.Lsim                        
+    enable_plots            = cfg.enable_plots
+    enable_file_log         = cfg.enable_file_log
+    BR                      = cfg.BR                 # BR baudrate
+    beta                    = cfg.beta               # Rolloff
+    M                       = cfg.M                  # QPSK modulation factor
+    OS                      = cfg.OS                 # Oversampling
+    nbaud                   = cfg.nbaud              # Bauds
+    Norm_enable             = cfg.Norm_enable        # Norm_enablealization enable
+    fs                      = cfg.fs                 # Sampling freq
+    fc                      = cfg.fc                 
+    filter_select           = cfg.filter_select      # True: Root raised cosine, False: Raised cosine
+    Nsymb                   = cfg.Nsymb              # Total symbols
+    offsetI                 = cfg.offsetI            
+    offsetQ                 = cfg.offsetQ            
+    phase                   = cfg.phase              
+    EbNo                    = cfg.EbNo               # [dB]
+    firfilter_order         = cfg.firfilter_order    
+    NTAPS_ad_fil            = cfg.NTAPS_ad_fil       # Coeficientes del filtro adaptivo
+    LMS_step                = cfg.LMS_step           # Step del LMS
+    Kp                      = cfg.Kp                 # Consstante proporcional PLL
+    Ki                      = cfg.Ki                 # Constante integral PLL
+    Lat                     = cfg.Lat                # Latencia PLL
+    delay_LMS               = cfg.delay_LMS
+    timer_phase_shift_on    = cfg.timer_phase_shift_on
+    timer_fcr_on            = cfg.timer_fcr_on       
+    PRBS_Q_seed             = cfg.PRBS_Q_seed        
+    PRBS_I_seed             = cfg.PRBS_I_seed        
+    enable_phase_shift      = cfg.enable_phase_shift 
+    enable_ch_filter        = cfg.enable_ch_filter
+    enable_noise            = cfg.enable_noise
+    enable_adap_filter      = cfg.enable_adap_filter
+    enable_fcr              = cfg.enable_fcr
+    
+    auxprint = True
     
     ##################################################################
     #                   DEFINICION DE BUFFERS                        #
@@ -153,7 +157,7 @@ def main(cfg, path_logs):
     agc_q = AGC(20,1)
 
     # Filtro adaptivo
-    RX_filter = filter_rx(NTAPS_ad_fil, LMS_step, Kp, Ki, Lat, delay_LMS, timer_fcr_on, frc_enable=enable_phase_shift)#,timer_cma_off)
+    RX_filter = filter_rx(NTAPS_ad_fil, LMS_step, Kp, Ki, Lat, delay_LMS, timer_fcr_on, frc_enable=enable_fcr)#,timer_cma_off)
     
     # Filtro receptor (alternativo)
     buffer_I_rx = np.zeros(len(filt))
@@ -213,7 +217,10 @@ def main(cfg, path_logs):
             LOG_SYMBS_Q_TX_RRC_OUT.append(RRC_tx_Q_symb_out)
 
             if enable_phase_shift: # Desfasaje de símbolos.
-                if((isim*Nsymb+i/OS)>(timer_fcr_on)):
+                if((isim*Nsymb+i/OS)>(2*timer_phase_shift_on)):
+                    if auxprint == True:
+                        auxprint = False
+                        print("Phase shift enabled after {} symbols".format(isim*Nsymb+i))
                     (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out,1)
                 else:
                     phased_symb_I = RRC_tx_I_symb_out

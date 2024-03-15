@@ -25,6 +25,7 @@ class config:
         self.Ki                     = 0
         self.Lat                    = 0
         self.delay_LMS              = 0
+        self.timer_phase_shift_on   = 0
         self.timer_fcr_on           = 0
         self.PRBS_Q_seed            = 0
         self.PRBS_I_seed            = 0
@@ -32,6 +33,7 @@ class config:
         self.enable_ch_filter       = 0
         self.enable_noise           = 0
         self.enable_adap_filter     = 0
+        self.enable_fcr             = 0
         
     def print_cfg(self):
         print('#'*20)
@@ -61,6 +63,7 @@ class config:
         print('Ki                   : ', self.Ki                    )
         print('Lat                  : ', self.Lat                   )
         print('delay_LMS            : ', self.delay_LMS             )
+        print('timer_phase_shift_on : ', self.timer_phase_shift_on  )
         print('timer_fcr_on         : ', self.timer_fcr_on          )
         print('PRBS_Q_seed          : ', self.PRBS_Q_seed           )
         print('PRBS_I_seed          : ', self.PRBS_I_seed           )
@@ -68,4 +71,5 @@ class config:
         print('Enable_ch_filter     : ', self.enable_ch_filter      )
         print('Enable_noise         : ', self.enable_noise          )
         print('Enable_adap_filter   : ', self.enable_adap_filter    )
+        print('Enable_fcr           : ', self.enable_fcr            )
         print('#'*20)

@@ -6,7 +6,7 @@ from classes.phase_off import phase_off
 # Instancia objeto que genera desplazamiento de fase.
 offset_gen =  phase_off()
 
-Nsymb   = 900 #4100, 2060, 1050, 520,270 
+Nsymb   = 1025 #4100, 2060, 1050, 520,270 
 
 symbolsI = 2*(np.random.uniform(-1,1,Nsymb)>0.0)-1;
 symbolsQ = 2*(np.random.uniform(-1,1,Nsymb)>0.0)-1;
@@ -44,10 +44,12 @@ symbQ_des = []
 ###########################################################################################
 
 for x in range(len(symbolsI)):
-    (auxI, auxQ) = offset_gen.get_phase_off(symbolsI[x], symbolsQ[x],1) #1 a 5
+    (auxI, auxQ) = offset_gen.get_phase_off(symbolsI[x], symbolsQ[x], 1) #1 a 5
     #(auxI, auxQ) = offset_gen.get_fixed_off(symbolsI[x], symbolsQ[x],1) #1 a 5
     symbI_des.append(auxI)
     symbQ_des.append(auxQ)
+
+offset_gen.plot_sin()
 
 offset = 0
 plt.figure(figsize=[6,6])

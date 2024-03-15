@@ -74,7 +74,7 @@ class filter_rx:
                 if self.symcounter > (self.fcr_on*2):
                     if self.auxprint == True:
                         self.auxprint = False
-                        print("FRC enabled after {} symbols".format(self.symcounter))
+                        print("FCR enabled after {} symbols".format(self.symcounter))
                     self.phi = self.fcr.PLL_process(eq_fcr_I, slicer_o_I, eq_fcr_Q, slicer_o_Q)
                     self.phi_conj = -1*self.phi
 
