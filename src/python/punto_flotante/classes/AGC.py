@@ -12,8 +12,8 @@ class AGC:
         self.FIFO = np.roll(self.FIFO,1)
         self.FIFO[0] = input
 
-        pwr = np.std(self.FIFO)
-        gain = self.target/pwr
+        metric = np.std(self.FIFO)
+        gain = self.target/metric
         if self.counter < self.TAPS:
             self.counter += 1
             output = 0

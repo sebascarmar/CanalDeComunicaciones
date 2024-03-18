@@ -53,4 +53,4 @@ class PLL_Class:
 
 
         #return self.tita_out[0]#, np.conj(self.tita_out)       
-        return self.tita_delay[0]#, np.conj(self.tita_out)
+        return self.tita_out[0]#, np.conj(self.tita_out)

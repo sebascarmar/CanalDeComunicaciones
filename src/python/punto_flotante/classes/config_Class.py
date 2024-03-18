@@ -4,6 +4,7 @@ class config:
         self.Lsim                   = 0
         self.enable_plots           = 0
         self.enable_file_log        = 0
+        self.enable_ber_log         = 0
         self.BR                     = 0
         self.beta                   = 0
         self.M                      = 0
@@ -42,9 +43,10 @@ class config:
         print('Lsim                 : ', self.Lsim                  )
         print('enable_plots         : ', self.enable_plots          )
         print('enable_file_log      : ', self.enable_file_log       )
+        print('enable_ber_log       : ', self.enable_ber_log        )
         print('BR                   : ', self.BR                    )
         print('beta                 : ', self.beta                  )
-        print('M                    : ', self.M                     )
+        print('M                    : ', self.M                     ) 
         print('OS                   : ', self.OS                    )
         print('nbaud                : ', self.nbaud                 )
         print('Norm_enable          : ', self.Norm_enable           )

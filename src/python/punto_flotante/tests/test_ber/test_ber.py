@@ -25,9 +25,10 @@ from classes.config_Class import config
 
 cfg = config()
 
-cfg.Lsim                    = 200                      
+cfg.Lsim                    = 2000                      
 cfg.enable_plots            = False                     
-cfg.enable_file_log         = True                     
+cfg.enable_file_log         = False                     
+cfg.enable_ber_log          = True                     
 cfg.BR                      = 25e6                      
 cfg.beta                    = 0.5                       
 cfg.M                       = 4                         
@@ -61,18 +62,20 @@ cfg.enable_fcr              = True
 
 # Reset files before start test
 path_logs = "logs/test_ber_"
-flog_ber_i          = open(path_logs + "BER_I.txt", "wt")
-flog_ber_q          = open(path_logs + "BER_Q.txt", "wt")
-flog_ebno           = open(path_logs + "ebno.txt",  "wt")
-flog_align_pos_i    = open(path_logs + "align_pos_i.txt"        , "wt")
-flog_align_pos_q    = open(path_logs + "align_pos_q.txt"        , "wt")
-flog_ber_i.close()
-flog_ber_q.close()
-flog_ebno.close()
-flog_align_pos_i.close()
-flog_align_pos_q.close()
 
-for ebno_value in np.arange(0, 10, 1):
+if cfg.enable_ber_log == True:
+    flog_ber_i          = open(path_logs + "BER_I.txt", "wt")
+    flog_ber_q          = open(path_logs + "BER_Q.txt", "wt")
+    flog_ebno           = open(path_logs + "ebno.txt",  "wt")
+    #flog_align_pos_i    = open(path_logs + "align_pos_i.txt"        , "wt")
+    #flog_align_pos_q    = open(path_logs + "align_pos_q.txt"        , "wt")
+    flog_ber_i.close()
+    flog_ber_q.close()
+    flog_ebno.close()
+    #flog_align_pos_i.close()
+    #flog_align_pos_q.close()
+
+for ebno_value in np.arange(0, 12, 1):
     cfg.EbNo = ebno_value
     cfg.print_cfg()
     main(cfg, path_logs)

@@ -24,6 +24,9 @@ class phase_off:
         
         self.cnt     = 0
         
+        self.pReal_symb_w_offset = 0
+        self.pImag_symb_w_offset = 0
+        
 #        self.list_aux = []
         
         #### Gráficas del cuarto de seno
@@ -94,16 +97,16 @@ class phase_off:
         self.symbI = RRC_tx_I_symb_out
         self.symbQ = RRC_tx_Q_symb_out
         
-        pReal_symb_w_offset = self.symbI*self.__cose(self.j) - self.symbQ*self.__seno(self.i)
-        pImag_symb_w_offset = self.symbI*self.__seno(self.i) + self.symbQ*self.__cose(self.j)
+        self.pReal_symb_w_offset = self.symbI*self.__cose(self.j) - self.symbQ*self.__seno(self.i)
+        self.pImag_symb_w_offset = self.symbI*self.__seno(self.i) + self.symbQ*self.__cose(self.j)
         #print(self.__cose(self.j), self.j) #Debug
        
-        if self.cnt%4 == 0:
-            self.__ptr_refresh()
-        self.cnt += 1
+        #if self.cnt%4 == 0:
+        self.__ptr_refresh()
+        #self.cnt += 1
         #self.list_aux.append(self.__seno(self.i))
         
-        return (pReal_symb_w_offset, pImag_symb_w_offset)
+        return (self.pReal_symb_w_offset, self.pImag_symb_w_offset)
 
 #    def plot_sin(self):
 #        plt.figure(figsize=[6,6])

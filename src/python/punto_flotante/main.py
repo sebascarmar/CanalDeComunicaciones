@@ -28,6 +28,7 @@ def main(cfg, path_logs):
     Lsim                    = cfg.Lsim                        
     enable_plots            = cfg.enable_plots
     enable_file_log         = cfg.enable_file_log
+    enable_ber_log          = cfg.enable_ber_log
     BR                      = cfg.BR                 # BR baudrate
     beta                    = cfg.beta               # Rolloff
     M                       = cfg.M                  # QPSK modulation factor
@@ -111,13 +112,14 @@ def main(cfg, path_logs):
         flog_err_I             = open(path_logs + "err_I.txt"                  , "wt") #creates a new file
         flog_err_Q             = open(path_logs + "err_Q.txt"                  , "wt") #creates a new file
         flog_phi               = open(path_logs + "phi.txt"                    , "wt") #creates a new file
-    flog_ber_i              = open(path_logs + "BER_I.txt"              , "a")  #append data at the end of the file
-    flog_ber_q              = open(path_logs + "BER_Q.txt"              , "a")  #append data at the end of the file
-    flog_ebno               = open(path_logs + "ebno.txt"               , "a")  #append data at the end of the file
-    flog_align_pos_i        = open(path_logs + "align_pos_i.txt"        , "a")
-    flog_align_pos_q        = open(path_logs + "align_pos_q.txt"        , "a")
-    #flog_errors_bit_i       = open(path_logs + "errors_bit_i.txt"        , "wt")
-    #flog_errors_bit_q       = open(path_logs + "errors_bit_q.txt"        , "wt")
+    if enable_ber_log == True:
+        flog_ber_i              = open(path_logs + "BER_I.txt"              , "a")  #append data at the end of the file
+        flog_ber_q              = open(path_logs + "BER_Q.txt"              , "a")  #append data at the end of the file
+        flog_ebno               = open(path_logs + "ebno.txt"               , "a")  #append data at the end of the file
+        #flog_align_pos_i        = open(path_logs + "align_pos_i.txt"        , "a")
+        #flog_align_pos_q        = open(path_logs + "align_pos_q.txt"        , "a")
+        #flog_errors_bit_i       = open(path_logs + "errors_bit_i.txt"        , "wt")
+        #flog_errors_bit_q       = open(path_logs + "errors_bit_q.txt"        , "wt")
     ##################################################################
     #                   CREACION DE OBJETOS                          #
     ##################################################################
@@ -153,8 +155,8 @@ def main(cfg, path_logs):
     antialias_filter_I = fir_filter(AAF_filter_coeff)
     antialias_filter_Q = fir_filter(AAF_filter_coeff)
 
-    agc_i = AGC(20,1)
-    agc_q = AGC(20,1)
+    agc_i = AGC(100, 1)
+    agc_q = AGC(100, 1)
 
     # Filtro adaptivo
     RX_filter = filter_rx(NTAPS_ad_fil, LMS_step, Kp, Ki, Lat, delay_LMS, timer_fcr_on, frc_enable=enable_fcr)#,timer_cma_off)
@@ -201,8 +203,9 @@ def main(cfg, path_logs):
             RRC_tx_I_symb = RRC_tx_I.map_out_bit_incoming(prbs_I_bits_out[0])
             RRC_tx_Q_symb = RRC_tx_Q.map_out_bit_incoming(prbs_Q_bits_out[0])
 
-            LOG_SYMBS_I_TX_RRC_IN.append(RRC_tx_I_symb)
-            LOG_SYMBS_Q_TX_RRC_IN.append(RRC_tx_Q_symb)
+            if enable_plots:
+                LOG_SYMBS_I_TX_RRC_IN.append(RRC_tx_I_symb)
+                LOG_SYMBS_Q_TX_RRC_IN.append(RRC_tx_Q_symb)
 
             RRC_tx_I.shift_symbols_incoming(RRC_tx_I_symb, control)
             RRC_tx_Q.shift_symbols_incoming(RRC_tx_Q_symb, control)
@@ -213,15 +216,16 @@ def main(cfg, path_logs):
             RRC_tx_I_symb_out = RRC_tx_I.get_symbol_output(RRC_tx_I_symbols_in, control)
             RRC_tx_Q_symb_out = RRC_tx_Q.get_symbol_output(RRC_tx_Q_symbols_in, control)
 
-            LOG_SYMBS_I_TX_RRC_OUT.append(RRC_tx_I_symb_out)
-            LOG_SYMBS_Q_TX_RRC_OUT.append(RRC_tx_Q_symb_out)
+            if enable_plots:
+                LOG_SYMBS_I_TX_RRC_OUT.append(RRC_tx_I_symb_out)
+                LOG_SYMBS_Q_TX_RRC_OUT.append(RRC_tx_Q_symb_out)
 
             if enable_phase_shift: # Desfasaje de símbolos.
                 if((isim*Nsymb+i/OS)>(2*timer_phase_shift_on)):
                     if auxprint == True:
                         auxprint = False
                         print("Phase shift enabled after {} symbols".format(isim*Nsymb+i))
-                    (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out,1)
+                    (phased_symb_I, phased_symb_Q) = offset_gen.get_phase_off(RRC_tx_I_symb_out, RRC_tx_Q_symb_out, 1)
                 else:
                     phased_symb_I = RRC_tx_I_symb_out
                     phased_symb_Q = RRC_tx_Q_symb_out
@@ -243,8 +247,9 @@ def main(cfg, path_logs):
                 Rx_I_symb_in = filtered_symb_I
                 Rx_Q_symb_in = filtered_symb_Q
 
-            LOG_SYMBS_I_RX_IN.append(Rx_I_symb_in)
-            LOG_SYMBS_Q_RX_IN.append(Rx_Q_symb_in)
+            if enable_plots:
+                LOG_SYMBS_I_RX_IN.append(Rx_I_symb_in)
+                LOG_SYMBS_Q_RX_IN.append(Rx_Q_symb_in)
             
             #ds_rx_I.insert_symbol(Rx_I_symb_in)
             #ds_rx_Q.insert_symbol(Rx_Q_symb_in)
@@ -262,8 +267,9 @@ def main(cfg, path_logs):
                     dsamp_I_symbol = ds_rx_I.get_symbol(0)
                     dsamp_Q_symbol = ds_rx_Q.get_symbol(0)
 
-                    LOG_SYMBS_I_DWS_OUT.append(dsamp_I_symbol)
-                    LOG_SYMBS_Q_DWS_OUT.append(dsamp_Q_symbol)
+                    if enable_plots:
+                        LOG_SYMBS_I_DWS_OUT.append(dsamp_I_symbol)
+                        LOG_SYMBS_Q_DWS_OUT.append(dsamp_Q_symbol)
                     
                     agc_out_I = agc_i.AGC_module(dsamp_I_symbol)
                     agc_out_Q = agc_q.AGC_module(dsamp_Q_symbol)
@@ -271,17 +277,19 @@ def main(cfg, path_logs):
                     # # Filtro Adaptivo
                     (Slicer_I,Slicer_Q) = RX_filter.loop_rx_filter(agc_out_I, agc_out_Q)
                 if control == phase:
-                    LOG_EQ_O_I.append(RX_filter.get_eq_o_I())
-                    LOG_EQ_FCR_I.append(RX_filter.get_eq_fcr_I())
-                    LOG_SL_O_I.append(RX_filter.get_slicer_I())
-                    LOG_ERR_I .append(RX_filter.get_error_I())
+                    
+                    if enable_plots:
+                        LOG_EQ_O_I.append(RX_filter.get_eq_o_I())
+                        LOG_EQ_FCR_I.append(RX_filter.get_eq_fcr_I())
+                        LOG_SL_O_I.append(RX_filter.get_slicer_I())
+                        LOG_ERR_I .append(RX_filter.get_error_I())
 
-                    LOG_EQ_O_Q.append(RX_filter.get_eq_o_Q())
-                    LOG_EQ_FCR_Q.append(RX_filter.get_eq_fcr_Q())
-                    LOG_SL_O_Q.append(RX_filter.get_slicer_Q())
-                    LOG_ERR_Q .append(RX_filter.get_error_Q())
+                        LOG_EQ_O_Q.append(RX_filter.get_eq_o_Q())
+                        LOG_EQ_FCR_Q.append(RX_filter.get_eq_fcr_Q())
+                        LOG_SL_O_Q.append(RX_filter.get_slicer_Q())
+                        LOG_ERR_Q .append(RX_filter.get_error_Q())
 
-                    LOG_PHI.append(RX_filter.get_phi())
+                        LOG_PHI.append(RX_filter.get_phi())
                     # Demapper
                     rx_I_bit_out = rx_demapper.get_bit(Slicer_I)
                     rx_Q_bit_out = rx_demapper.get_bit(Slicer_Q)
@@ -317,6 +325,70 @@ def main(cfg, path_logs):
                 ber_rxQ.insert_tx_bit(prbs_Q_bits_out[0])
                 ber_rxI.insert_rx_bit(rx_I_bit_out)
                 ber_rxQ.insert_rx_bit(rx_Q_bit_out)
+                
+            # if (isim*Nsymb+i/OS)>(2*timer_phase_shift_on):
+            #     print('#'*20)
+            #     print("iteration            : {}".format(isim*Nsymb+ i))
+            #     print("control              : {}".format(control))
+            #     print('#'*20)
+            #     print('Pulse shape')
+            #     print('#'*20)
+            #     print("RRC_tx_I_symb_out    : {}".format(RRC_tx_I_symb_out))
+            #     print("RRC_tx_Q_symb_out    : {}".format(RRC_tx_Q_symb_out))
+            #     print('#'*20)
+            #     print('Phase off')
+            #     print('#'*20)
+            #     print("phased_symb_I        : {}".format(phased_symb_I))
+            #     print("phased_symb_Q        : {}".format(phased_symb_Q))
+            #     print('#'*20)
+            #     print('Channel filter')
+            #     print('#'*20)
+            #     print("filtered_symb_I      : {}".format(filtered_symb_I))
+            #     print("filtered_symb_Q      : {}".format(filtered_symb_Q))
+            #     print('#'*20)
+            #     print('AWGN gen')
+            #     print('#'*20)
+            #     print("Rx_I_symb_in         : {}".format(Rx_I_symb_in))
+            #     print("Rx_Q_symb_in         : {}".format(Rx_Q_symb_in))
+            #     print('#'*20)
+            #     print('AAF')
+            #     print('#'*20)
+            #     print("aaf_rx_I             : {}".format(aaf_rx_I))
+            #     print("aaf_rx_Q             : {}".format(aaf_rx_Q))
+            #     print('#'*20)
+            #     print('Downsampler')
+            #     print('#'*20)
+            #     print("ds_rx_I.fifo         : {}".format(ds_rx_I.fifo))
+            #     print("ds_rx_Q.fifo         : {}".format(ds_rx_Q.fifo))
+            #     print("dsamp_I_symbol       : {}".format(dsamp_I_symbol))
+            #     print("dsamp_Q_symbol       : {}".format(dsamp_Q_symbol))
+            #     print('#'*20)
+            #     print('AGC')
+            #     print('#'*20)
+            #     print("agc_out_I            : {}".format(agc_out_I))
+            #     print("agc_out_Q            : {}".format(agc_out_Q))
+            #     print('#'*20)
+            #     print('Adaptive filter')
+            #     print('#'*20)
+            #     print("RX_filter.eq_o_I     : {}".format(RX_filter.eq_o_I     )) 
+            #     print("RX_filter.eq_o_Q     : {}".format(RX_filter.eq_o_Q     )) 
+            #     print("RX_filter.eq_fcr_I   : {}".format(RX_filter.eq_fcr_I   )) 
+            #     print("RX_filter.eq_fcr_Q   : {}".format(RX_filter.eq_fcr_Q   )) 
+            #     print("RX_filter.slicer_I   : {}".format(RX_filter.slicer_I   )) 
+            #     print("RX_filter.slicer_Q   : {}".format(RX_filter.slicer_Q   )) 
+            #     print("RX_filter.error_I    : {}".format(RX_filter.error_I    )) 
+            #     print("RX_filter.error_Q    : {}".format(RX_filter.error_Q    )) 
+            #     print("RX_filter.error_fcr_I: {}".format(RX_filter.error_fcr_I)) 
+            #     print("RX_filter.error_fcr_Q: {}".format(RX_filter.error_fcr_Q)) 
+                
+            #     print("RX_filter.ad_fil_I.Coef_FFE     : {}".format(RX_filter.ad_fil_I.Coef_FFE))
+            #     print("RX_filter.ad_fil_Q.Coef_FFE     : {}".format(RX_filter.ad_fil_Q.Coef_FFE))
+            #     print("RX_filter.ad_fil_I.FIFO_FFE     : {}".format(RX_filter.ad_fil_I.FIFO_FFE))
+            #     print("RX_filter.ad_fil_Q.FIFO_FFE     : {}".format(RX_filter.ad_fil_Q.FIFO_FFE))
+            #     print("RX_filter.ad_fil_I.FIFO_LMS     : {}".format(RX_filter.ad_fil_I.FIFO_LMS))
+            #     print("RX_filter.ad_fil_Q.FIFO_LMS     : {}".format(RX_filter.ad_fil_Q.FIFO_LMS))
+                
+            #     input('Press enter to continue: ')
 
         offsetI = - ber_rxI.correlacion()
         offsetQ = - ber_rxQ.correlacion()
@@ -368,13 +440,13 @@ def main(cfg, path_logs):
 
         for idx in range(len(LOG_PHI)):
             flog_phi.write(str(LOG_PHI[idx])+"\n")
-    
-    flog_ber_i.write(str(ber_rxI.bits_errores/ber_rxI.bits_totales)+"\n")       #Store ber I (concatenated)
-    flog_ber_q.write(str(ber_rxQ.bits_errores/ber_rxQ.bits_totales)+"\n")       #Store ber Q (concatenated)
-    flog_ebno.write(str(EbNo)+"\n")                                             #Store EbNo (concatenated)
-    flog_align_pos_i.write(str(offsetI)+"\n")
-    flog_align_pos_q.write(str(offsetQ)+"\n")
-    #close all files
+    if enable_ber_log == True:
+        flog_ber_i.write(str(ber_rxI.bits_errores/ber_rxI.bits_totales)+"\n")       #Store ber I (concatenated)
+        flog_ber_q.write(str(ber_rxQ.bits_errores/ber_rxQ.bits_totales)+"\n")       #Store ber Q (concatenated)
+        flog_ebno.write(str(EbNo)+"\n")                                             #Store EbNo (concatenated)
+        #flog_align_pos_i.write(str(offsetI)+"\n")
+        #flog_align_pos_q.write(str(offsetQ)+"\n")
+        #close all files
     if(enable_file_log):
         flog_RRC_tx_I_symb          .close()
         flog_RRC_tx_Q_symb          .close()
@@ -393,13 +465,15 @@ def main(cfg, path_logs):
         flog_err_I                  .close()
         flog_err_Q                  .close()
         flog_phi                    .close()
-    flog_ber_i                  .close()
-    flog_ber_q                  .close()
-    flog_ebno                   .close()
-    flog_align_pos_i            .close()
-    flog_align_pos_q            .close()
-    #flog_errors_bit_i           .close()
-    #flog_errors_bit_q           .close()
+        
+    if enable_ber_log == True:
+        flog_ber_i                  .close()
+        flog_ber_q                  .close()
+        flog_ebno                   .close()
+        #flog_align_pos_i            .close()
+        #flog_align_pos_q            .close()
+        #flog_errors_bit_i           .close()
+        #flog_errors_bit_q           .close()
     
     if enable_plots:
         # plt.figure(figsize=[6,6])
